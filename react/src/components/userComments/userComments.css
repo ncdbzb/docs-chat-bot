@@ -1,0 +1,103 @@
+.feedback-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+    color: #000;
+}
+
+.form-grade {
+    display: flex;
+    gap: 20px;
+}
+
+.form-grade img{
+    cursor: pointer;
+}
+.textarea-container {
+    position: relative;
+}
+  
+.char-count {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 12px;
+    color: gray;
+}
+.form-feedback{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+    background: #FFFFFF;
+    border-radius: 6px;
+    padding: 24px;
+    box-shadow: 0px 0px 7px 0px rgba(0, 0, 0, 0.25);
+}
+textarea#feedbackText {
+    width: 458px;
+    height: 105px;
+    padding: 10px 12px;
+    resize: none;
+}
+.form-feedback-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.container-button {
+    display: flex;
+    gap: 16px;
+}
+.form-container-brim .container-button {
+    display: flex;
+    flex-direction: row;
+}
+
+.form-feedback-block-title {
+    display: flex;
+    justify-content: space-between;
+}
+
+.close-icon{
+    padding-right: 4px;
+}
+.popup-user-comment {
+    position: fixed;
+    top: 50%;
+    left: 42%;
+    background: #00A87B;
+    color: #FFFFFF;
+    padding: 10px 30px;
+    font-size: 20px;
+    border-radius: 7px;
+}
+/* section.container-work-documentation {
+    overflow-x: hidden;
+} */
+/* .close-button {
+    position: absolute;
+    cursor: pointer;
+    right: 45px;
+    top: 35px;
+}
+
+.close-button:before, .close-button:after {
+    content: "";
+    position: absolute; 
+    width: 24px; 
+    height: 4px; 
+    background: gray;
+}
+
+.close-button:before {
+    transform: rotate(45deg);
+}
+
+.close-button:after {
+    transform: rotate(-45deg);
+} */

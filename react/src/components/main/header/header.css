@@ -1,0 +1,84 @@
+
+.main-nav {
+    margin: 40px auto;
+    max-width: 1280px;
+    color: #222222;
+}
+
+.site-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.site-navigation-item {
+    align-items: center;
+}
+
+.buttons {
+    color: #222222;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+.button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0px;
+    min-width: 198px;
+    color: #222222;
+    border: 1px solid #222222;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0);
+}
+.btn-signUp {
+    position: relative;
+}
+.auth-container {
+    display: flex;
+    gap: 12px;
+}
+.button-header {
+    color: #222222;
+}
+.click-arrow {
+    transform: rotate(180deg);
+}
+.btn-user-lk {
+    display: flex;
+    gap: 6px;
+    cursor: pointer;
+}
+.container-lk {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.container-lk a{
+    font-family: 'Montserrat-Regular';
+    font-size: 14px;
+}
+.nav-lk.active{
+    display: flex;
+}
+.nav-lk {
+    align-items: self-start;
+    background-color: #fff;
+    display: none;
+    flex-direction: column;
+    gap: 24px;
+    width: 140px;
+    padding: 12px 30px;
+    position: absolute;
+    top: 40px;
+    border-radius: 3px;
+    z-index: 10;
+}
+.user-FIO {
+    display: flex;
+    justify-content: end;
+    max-width: 170px;
+    flex-wrap: wrap;
+    gap: 5px;
+}

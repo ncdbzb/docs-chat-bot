@@ -1,0 +1,146 @@
+.form-container {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    margin: 100px auto 0px;
+    padding: 32px 0px;
+    color: #000;
+    max-width: 416px;
+    background: #ffffff;
+    text-align: center;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.container-sign-up::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../../../img/регистрация.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+}
+
+.container-log-in::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../../../img/регистрация.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+}
+
+.container-reset-password::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../../../img/регистрация.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+}
+.container-forgot-password{
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../../../img/регистрация.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+}
+
+.form-container-brim {
+    width: 369px;
+    margin-bottom: 16px;
+}
+
+.form-container-brim div {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.form-container label {
+    display: flex;
+}
+button.btn__pass.js-btn-password {
+    position: absolute;
+    top: 30px;
+    right: 12px;
+    background-color: white;
+}
+
+.form-container h2 {
+    position: absolute;
+    top: -48px;
+}
+
+.form-container input {
+    min-width: 344px;
+    padding: 8px 12px;
+    margin: 4px 0px;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 5px;
+}
+
+.submit-form {
+    min-width: 200px;
+    padding: 10px 0px;
+    background-color: #31D9AF;
+    color: #fff;
+    border-radius: 5px;
+    /* border-radius: 3px; */
+    cursor: pointer;
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+
+
+}
+
+.submit-form:hover {
+    opacity: 0.6;
+}
+
+.btn-forgot {
+    margin-bottom: 12px;
+}
+.block-registr{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn__pass{
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 27px;
+    right: 12px;
+}
+
+.form-validation{
+
+}

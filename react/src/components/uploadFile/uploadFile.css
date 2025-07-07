@@ -1,0 +1,69 @@
+.form_question{
+    display: flex;
+}
+.container-upload .popup{
+    display: flex;
+    left: 50%;
+    transform: translate(-50%, -8%);
+}
+.container-upload::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../../img/тесты.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+}
+
+.form-container-upload {
+    max-width: 592px;
+    display: flex;
+    gap: 16px;
+    flex-direction: column;
+    align-items: self-start;
+    padding: 24px;
+    margin: 100px auto 0px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+    color: #000;
+    background-color: #FFFFFF;
+}
+.form-container-upload h2{
+    font-size: 22px;
+    font-weight: 600;
+}
+.upload-name input {
+    margin-bottom: 0;
+    min-width: 368px;
+    padding: 8px 12px;
+    font-size: 16px;
+}
+.form-container-upload div{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.upload-description textarea{
+    resize: none;
+    padding: 8px 12px;
+    min-width: 568px;
+    min-height: 136px;
+}
+.form-container-upload .container-button {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+}
+.answer, form.block-form-request {
+    display: flex;
+    justify-content: center;
+}
+.container-upload button{
+    font-size: 16px;
+}
