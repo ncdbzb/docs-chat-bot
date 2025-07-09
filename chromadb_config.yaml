@@ -1,0 +1,13 @@
+########################
+# HTTP server settings #
+########################
+port: 8800
+listen_address: "0.0.0.0"
+max_payload_size_bytes: 41943040
+cors_allow_origins: ["*"]
+
+####################
+# General settings #
+####################
+persist_path: "/chroma/chroma"
+allow_reset: false

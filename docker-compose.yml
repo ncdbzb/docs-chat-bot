@@ -1,68 +1,125 @@
-version: '3.8'
 services:
   db:
-    image: postgres:latest
+    image: postgres:17
     container_name: postgres_db
     restart: always
     env_file:
       - .env
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
-    ports:
-      - ${DB_PORT}:${DB_PORT}
+      - POSTGRES_DB=${DB_NAME?Variable not set}
+      - POSTGRES_USER=${DB_USER?Variable not set}
+      - POSTGRES_PASSWORD=${DB_PASS?Variable not set}
+    expose:
+      - ${DB_PORT}
     volumes:
       - pgdata:/var/lib/postgresql/data
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+  
   redis:
-    image: redis:7.0.11-alpine
+    image: redis/redis-stack-server:7.4.0-v5
+    container_name: redis
     env_file:
       - .env
-    ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
-
-  fastapi:
-    build:
-      context: ./fast_api
-      dockerfile: Dockerfile.fast_api
-    env_file:
-      - .env
-    container_name: fastapi_app
+    expose:
+      - ${REDIS_PORT}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: "redis-server --requirepass ${REDIS_PASSWORD}"
     restart: always
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - gigachat_api
-      - redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 3s
+      timeout: 10s
+      retries: 10
 
-  gigachat_api:
-    build:
-      context: ./gigachat_api
-      dockerfile: Dockerfile.gigachat_api
-      args:
-        INSTALL_DEV: ${INSTALL_DEV-false}
-    restart: always
-    env_file:
-      - ./gigachat_api/.env
-    container_name: gigachat_api
-    ports:
-      - "8080:8080"
+  chromadb:
+    image: chromadb/chroma:1.0.12
+    container_name: chromadb
+    expose:
+      - ${CHROMADB_PORT}
+    restart: unless-stopped
     volumes:
-      - gigachat_api_data:/chatops_udv/gigachat_api/gigachatAPI/data/
+      - chroma_data:/chroma/chroma
+      - ./chromadb_config.yaml:/config.yaml
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "/bin/bash", "-c", "cat < /dev/null > /dev/tcp/localhost/${CHROMADB_PORT}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  react:
+  docs_api:
     build:
-      context: ./react
-      dockerfile: Dockerfile.react
-    container_name: react
+      context: ./docs_api
+      dockerfile: Dockerfile.docs_api
+    env_file:
+      - .env
+    container_name: docs_api
+    expose:
+      - ${DOCS_API_PORT}
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port ${DOCS_API_PORT}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    env_file:
+      - .env
+    container_name: backend
+    restart: always
+    volumes:
+      - ./backend/migrations/versions:/app/migrations/versions
+    expose:
+      - ${BACKEND_PORT}
+    depends_on:
+      - docs_api
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+      args:
+        REACT_APP_API_URL: "https://${SERVER_DOMAIN}/api"
+        REACT_APP_API_FRONT_URL: "https://${SERVER_DOMAIN}"
+    container_name: frontend
+    volumes:
+      - nginx_certs:/etc/nginx/certs
     ports:
-      - "443:443"
+      - "444:443"
     restart: always
     depends_on:
-      - fastapi
+      - backend
+
+  pgadmin:
+    image: dpage/pgadmin4:9.5
+    container_name: pg_admin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: 40
+    restart: always
+    ports:
+    - "8888:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin-servers.json:/pgadmin4/servers.json
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:
-  gigachat_api_data:
+  pgadmin_data:
+  nginx_certs:
+  chroma_data:
