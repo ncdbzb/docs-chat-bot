@@ -29,6 +29,15 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str
     REDIS_CELERY_DB: int
 
+    # MinIO
+    MINIO_ENDPOINT: str
+    MINIO_ACCESS_KEY: str
+    MINIO_SECRET_KEY: str
+    MINIO_SECURE: bool = False
+    MINIO_BUCKET_NAME: str
+    MINIO_ROOT_PATH: str
+
+
     @property
     def redis_url(self) -> str:
         return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_CELERY_DB}"

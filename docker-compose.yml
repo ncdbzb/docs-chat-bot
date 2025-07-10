@@ -57,18 +57,15 @@ services:
     image: minio/minio:RELEASE.2025-03-12T18-04-18Z
     container_name: minio
     restart: always
-    entrypoint: sh
-    command: -c 'mkdir -p /data/langfuse && minio server /data --address ":${MINIO_API_PORT}" --console-address ":${MINIO_CONSOLE_PORT}"'
-    expose:
-      - ${MINIO_API_PORT}
+    command: server /data --address :${MINIO_API_PORT} --console-address :${MINIO_CONSOLE_PORT}
+    ports:
+      - ${MINIO_API_PORT}:${MINIO_API_PORT}
+      - ${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}
     volumes:
       - minio_data:/data
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-      - MINIO_API_SYNC_EVENTS=on
-      - MINIO_NOTIFY_WEBHOOK_ENABLE=on
-      - MINIO_BROWSER_REDIRECT_URL=https://${SERVER_DOMAIN}/minio
     healthcheck:
       test: [ "CMD", "mc", "ready", "local" ]
       interval: 1s
@@ -92,6 +89,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      chromadb:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
 
   backend:
     build:
@@ -99,6 +100,10 @@ services:
       dockerfile: Dockerfile.backend
     env_file:
       - .env
+    environment:
+      - MINIO_ENDPOINT=${MINIO_DOMAIN}:${MINIO_API_PORT}
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
     container_name: backend
     restart: always
     volumes:
@@ -146,3 +151,4 @@ volumes:
   pgadmin_data:
   nginx_certs:
   chroma_data:
+  minio_data:
