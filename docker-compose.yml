@@ -53,6 +53,29 @@ services:
       timeout: 10s
       retries: 3
 
+  minio:
+    image: minio/minio:RELEASE.2025-03-12T18-04-18Z
+    container_name: minio
+    restart: always
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server /data --address ":${MINIO_API_PORT}" --console-address ":${MINIO_CONSOLE_PORT}"'
+    expose:
+      - ${MINIO_API_PORT}
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_API_SYNC_EVENTS=on
+      - MINIO_NOTIFY_WEBHOOK_ENABLE=on
+      - MINIO_BROWSER_REDIRECT_URL=https://${SERVER_DOMAIN}/minio
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+      start_period: 1s
+
   docs_api:
     build:
       context: ./docs_api

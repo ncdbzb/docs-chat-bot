@@ -30,10 +30,12 @@ const FormTest = () => {
     const onSubmitDock = async (data) => {
         setServerError('')
         const formDatas = new FormData();
+        formDatas.append('doc_name', dockName);
+        formDatas.append('doc_description', dockDescription);
         formDatas.append('file', data.files[0]);
         setLoading(true); // Показываем spinner
         try {
-            const response = await fetch(`${apiUrl}/docks/upload-dock?dock_name=${dockName}&dock_description=${dockDescription}`, {
+            const response = await fetch(`${apiUrl}/documents/upload`, {
                 method: 'POST',
                 credentials: 'include',
                 body: formDatas

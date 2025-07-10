@@ -10,7 +10,7 @@ from app.config import settings
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 from app.auth.models import metadata as auth_metadata
-# from src.docs.models import metadata as docs_metadata
+from app.documents.models import metadata as docs_metadata
 # from src.llm_service.models import metadata as llm_service_metadata
 # from src.admin_panel.models import metadata as admin_panel_metadata
 config = context.config
@@ -32,7 +32,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 target_metadata = [
     auth_metadata,
-    # docs_metadata,
+    docs_metadata,
     # llm_service_metadata,
     # admin_panel_metadata
 ]

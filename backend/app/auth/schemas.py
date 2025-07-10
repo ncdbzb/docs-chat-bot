@@ -1,11 +1,12 @@
 from typing import Optional
+from uuid import UUID
 
 from fastapi_users import schemas
 from pydantic import EmailStr
 
 
-class UserRead(schemas.BaseUser[int]):
-    id: int
+class UserRead(schemas.BaseUser[UUID]):
+    id: UUID
     name: str
     surname: str
     email: EmailStr
@@ -15,6 +16,7 @@ class UserRead(schemas.BaseUser[int]):
 
     class Config:
         from_attributes = True
+
 
 
 class UserCreate(schemas.BaseUserCreate):

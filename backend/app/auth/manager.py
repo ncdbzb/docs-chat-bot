@@ -1,8 +1,9 @@
 import jwt
+import uuid
 from typing import Optional, Dict, Any
 
 from fastapi import Depends, Request, Response, HTTPException, status
-from fastapi_users import BaseUserManager, exceptions, IntegerIDMixin, models, schemas, InvalidPasswordException
+from fastapi_users import BaseUserManager, exceptions, UUIDIDMixin, models, schemas, InvalidPasswordException
 from fastapi_users.jwt import generate_jwt, decode_jwt
 
 from app.auth.models import AuthUser
@@ -14,7 +15,7 @@ from app.config import settings
 from app.logger import logger
 
 
-class UserManager(IntegerIDMixin, BaseUserManager[AuthUser, int]):
+class UserManager(UUIDIDMixin, BaseUserManager[AuthUser, uuid.UUID]):
     reset_password_token_secret = settings.SECRET_MANAGER
     verification_token_secret = settings.SECRET_MANAGER
 

@@ -10,3 +10,6 @@ restart:
 
 logs:
 	docker compose logs -f
+
+revision:
+	docker compose exec backend alembic revision --autogenerate
