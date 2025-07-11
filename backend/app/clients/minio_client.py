@@ -1,6 +1,7 @@
 import io
 from minio import Minio
 from minio.error import S3Error
+from minio.deleteobjects import DeleteObject
 
 from app.config import settings
 from app.logger import logger
@@ -54,7 +55,7 @@ class MinioClient:
         try:
             errors = self.client.remove_objects(
                 bucket_name=self.bucket_name,
-                delete_object_list=[{"name": name} for name in full_names]
+                delete_object_list=[DeleteObject(name) for name in full_names]
             )
 
             failed = list(errors)
