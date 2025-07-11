@@ -20,5 +20,6 @@ documents = Table(
     Column("size", BigInteger, nullable=False),
     Column("description", Text),
     Column("user_id", UUID(as_uuid=True), ForeignKey(user.c.id, ondelete="CASCADE")),
+    Column("storage_key", String, nullable=False),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
 )

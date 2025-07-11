@@ -23,5 +23,7 @@ mako
 celery
 redis
 
+minio
+
 python-dotenv
 typing-extensions

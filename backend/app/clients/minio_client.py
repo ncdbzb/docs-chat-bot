@@ -1,9 +1,10 @@
+import io
 from minio import Minio
 from minio.error import S3Error
-import io
-import logging
 
-from config import settings
+from app.config import settings
+from app.logger import logger
+
 
 class MinioClient:
     def __init__(self):
@@ -19,8 +20,11 @@ class MinioClient:
         try:
             if not self.client.bucket_exists(self.bucket_name):
                 self.client.make_bucket(self.bucket_name)
+                logger.info(f"Bucket '{self.bucket_name}' создан в MinIO")
+            else:
+                logger.info(f"Bucket '{self.bucket_name}' уже существует в MinIO")
         except S3Error as e:
-            logging.error(f"MinIO bucket error: {e}")
+            logger.exception(f"Ошибка инициализации MinIO bucket: {e}")
             raise
 
     def _get_object_name(self, filename: str) -> str:
@@ -36,14 +40,16 @@ class MinioClient:
                 length=len(file_bytes),
                 content_type=content_type
             )
+            logger.info(f"Файл успешно загружен в MinIO: {object_name}")
         except S3Error as e:
-            logging.error(f"Upload error for {object_name}: {e}")
+            logger.error(f"Ошибка загрузки {object_name} в MinIO: {e}")
             raise
 
     def delete_document(self, object_name: str) -> None:
         object_name = self._get_object_name(object_name)
         try:
             self.client.remove_object(self.bucket_name, object_name)
+            logger.info(f"Файл успешно удалён из MinIO: {object_name}")
         except S3Error as e:
-            logging.error(f"Delete error for {object_name}: {e}")
+            logger.error(f"Ошибка удаления {object_name} из MinIO: {e}")
             raise

@@ -7,6 +7,7 @@ from app.documents.models import documents
 from app.documents.schemas import DocumentCreateResponse
 from app.clients.minio_client import MinioClient
 from app.auth.models import AuthUser
+from app.logger import logger
 
 
 MAX_FILE_SIZE_MB = 100
@@ -22,18 +23,24 @@ async def save_document(
     doc_name: str,
     doc_description: str,
 ) -> DocumentCreateResponse:
+    logger.info(f"Начало загрузки документа пользователем {user.id}: {file.filename}")
+
     if not file.filename:
+        logger.warning("Файл не загружен")
         raise HTTPException(status_code=400, detail="Файл не загружен")
 
     if not any(file.filename.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS):
+        logger.warning(f"Недопустимый тип файла: {file.filename}")
         raise HTTPException(status_code=400, detail="Неподдерживаемый тип файла")
 
     contents = await file.read()
     if not contents:
+        logger.warning("Файл пустой")
         raise HTTPException(status_code=400, detail="Файл пустой")
 
     file_size = len(contents)
     if file_size > MAX_FILE_SIZE_MB * 1024 * 1024:
+        logger.warning("Файл превышает допустимый размер")
         raise HTTPException(status_code=400, detail="Размер файла превышает 100MB")
 
     check_query = select(documents).where(
@@ -42,6 +49,7 @@ async def save_document(
     )
     result = await session.execute(check_query)
     if result.scalar():
+        logger.warning(f"Документ с именем '{doc_name}' уже существует у пользователя {user.id}")
         raise HTTPException(status_code=400, detail="Документ с таким именем уже существует")
 
     file_type = file.filename.split(".")[-1].lower()
@@ -56,6 +64,7 @@ async def save_document(
             content_type=content_type
         )
     except Exception as e:
+        logger.error(f"Ошибка загрузки файла в MinIO: {e}")
         raise HTTPException(status_code=500, detail="Ошибка при сохранении в MinIO")
 
     stmt = insert(documents).values(
@@ -69,7 +78,17 @@ async def save_document(
         storage_key=object_name
     ).returning(documents)
 
-    result = await session.execute(stmt)
-    await session.commit()
+    try:
+        result = await session.execute(stmt)
+        await session.commit()
+    except Exception as e:
+        logger.error(f"Ошибка записи метаданных документа в базу: {e}. Откатываю из MinIO.")
+        try:
+            minio_client.delete_document(object_name)
+            logger.info(f"Файл {object_name} удалён из MinIO после ошибки в БД.")
+        except Exception as minio_err:
+            logger.critical(f"Ошибка при откате удаления из MinIO: {minio_err}")
+        raise HTTPException(status_code=500, detail="Ошибка при сохранении документа")
 
+    logger.info(f"Документ успешно сохранён в PostgreSQL: {doc_id}")
     return DocumentCreateResponse(**result.fetchone()._mapping)
