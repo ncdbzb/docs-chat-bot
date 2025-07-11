@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import insert, select, delete
+from sqlalchemy import insert, select, delete, or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.documents.models import documents
@@ -88,4 +88,29 @@ class DocumentRepository:
             return deleted_count
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при удалении документов: {e}")
+            raise
+    
+    async def get_my_documents_from_repo(self, user_id: uuid.UUID):
+        try:
+            stmt = select(documents.c.name, documents.c.description).where(
+                documents.c.user_id == user_id
+            )
+            result = await self.session.execute(stmt)
+            docs = result.mappings().all()
+            logger.info(f"Найдено {len(docs)} документов для пользователя {user_id}")
+            return docs
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при получении документов пользователя {user_id}: {e}")
+            raise
+
+
+    async def get_all_documents_from_repo(self):
+        try:
+            stmt = select(documents.c.name, documents.c.description)
+            result = await self.session.execute(stmt)
+            docs = result.mappings().all()
+            logger.info(f"Найдено {len(docs)} документов (всего)")
+            return docs
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при получении всех документов: {e}")
             raise

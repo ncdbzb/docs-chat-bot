@@ -46,7 +46,7 @@ const SeachForDocumentation = ({ onClick }) => {
             const fetchData = async () => {
                 try {
                     // Отправка запроса при загрузке страницы
-                    const response = await fetch(`${apiUrl}/docks/${userUrl}`, {
+                    const response = await fetch(`${apiUrl}/documents/${userUrl}`, {
                         method: 'GET',
                         credentials: 'include', // Убедитесь, что куки прикрепляются к запросу
                     });
