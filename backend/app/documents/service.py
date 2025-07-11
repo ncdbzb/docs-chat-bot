@@ -1,10 +1,9 @@
 import uuid
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, insert
 
-from app.documents.models import documents
 from app.documents.schemas import DocumentCreateResponse
+from app.documents.repository import DocumentRepository
 from app.clients.minio_client import MinioClient
 from app.auth.models import AuthUser
 from app.logger import logger
@@ -43,13 +42,9 @@ async def save_document(
         logger.warning("Файл превышает допустимый размер")
         raise HTTPException(status_code=400, detail="Размер файла превышает 100MB")
 
-    check_query = select(documents).where(
-        documents.c.name == doc_name,
-        documents.c.user_id == user.id
-    )
-    result = await session.execute(check_query)
-    if result.scalar():
-        logger.warning(f"Документ с именем '{doc_name}' уже существует у пользователя {user.id}")
+    repo = DocumentRepository(session)
+
+    if await repo.is_name_exists_for_user(user.id, doc_name):
         raise HTTPException(status_code=400, detail="Документ с таким именем уже существует")
 
     file_type = file.filename.split(".")[-1].lower()
@@ -67,28 +62,21 @@ async def save_document(
         logger.error(f"Ошибка загрузки файла в MinIO: {e}")
         raise HTTPException(status_code=500, detail="Ошибка при сохранении в MinIO")
 
-    stmt = insert(documents).values(
-        id=doc_id,
-        name=doc_name,
-        original_filename=file.filename,
-        description=doc_description,
-        type=file_type,
-        size=file_size,
-        user_id=user.id,
-        storage_key=object_name
-    ).returning(documents)
-
     try:
-        result = await session.execute(stmt)
-        await session.commit()
-    except Exception as e:
-        logger.error(f"Ошибка записи метаданных документа в базу: {e}. Откатываю из MinIO.")
+        return await repo.add_document(
+            doc_id=doc_id,
+            name=doc_name,
+            original_filename=file.filename,
+            description=doc_description,
+            type=file_type,
+            size=file_size,
+            user_id=user.id,
+            storage_key=object_name,
+        )
+    except Exception:
         try:
             minio_client.delete_document(object_name)
             logger.info(f"Файл {object_name} удалён из MinIO после ошибки в БД.")
         except Exception as minio_err:
-            logger.critical(f"Ошибка при откате удаления из MinIO: {minio_err}")
+            logger.critical(f"Ошибка при удалении из MinIO после сбоя: {minio_err}")
         raise HTTPException(status_code=500, detail="Ошибка при сохранении документа")
-
-    logger.info(f"Документ успешно сохранён в PostgreSQL: {doc_id}")
-    return DocumentCreateResponse(**result.fetchone()._mapping)

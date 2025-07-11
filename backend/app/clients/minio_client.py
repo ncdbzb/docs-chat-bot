@@ -53,3 +53,14 @@ class MinioClient:
         except S3Error as e:
             logger.error(f"Ошибка удаления {object_name} из MinIO: {e}")
             raise
+
+    def list_documents(self) -> list[str]:
+        prefix = f"{self.root_path}/" if self.root_path else ""
+        try:
+            objects = self.client.list_objects(bucket_name=self.bucket_name, prefix=prefix, recursive=True)
+            object_names = [obj.object_name for obj in objects]
+            logger.info(f"Получено {len(object_names)} объектов из MinIO с префиксом '{prefix}'")
+            return object_names
+        except S3Error as e:
+            logger.error(f"Ошибка при получении списка объектов из MinIO: {e}")
+            raise
