@@ -1,26 +1,26 @@
 import httpx
 import asyncio
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.logger import logger
 from app.auth.models import user as user_table
-from app.database import async_session_maker
 
 
 async def init_admin_user(
+    session: AsyncSession,
     register_url: str = f"http://backend:{settings.BACKEND_PORT}/auth/register",
 ) -> None:
     """
     Создание пользователя-админа при старте, если он не существует.
     """
 
-    async with async_session_maker() as session:
-        result = await session.execute(
-            select(user_table).where(user_table.c.email == settings.ADMIN_EMAIL)
-        )
-        if result.scalar_one_or_none():
-            return
+    result = await session.execute(
+        select(user_table).where(user_table.c.email == settings.ADMIN_EMAIL)
+    )
+    if result.scalar_one_or_none():
+        return
 
     admin_user_data = {
         "email": settings.ADMIN_EMAIL,
@@ -61,6 +61,6 @@ async def init_admin_user(
 
     logger.error("Все попытки создать администратора завершились неудачей.")
 
-async def delayed_admin_init():
+async def delayed_admin_init(session: AsyncSession,):
     await asyncio.sleep(1)
-    await init_admin_user()
+    await init_admin_user(session)

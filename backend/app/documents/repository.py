@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, delete
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.documents.models import documents
@@ -71,4 +71,21 @@ class DocumentRepository:
             return exists
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при проверке существования документа: {e}")
+            raise
+    
+    async def delete_documents(self, doc_ids: list[uuid.UUID]) -> int:
+        if not doc_ids:
+            logger.warning("Список ID документов для удаления пуст")
+            return 0
+
+        stmt = delete(documents).where(documents.c.id.in_(doc_ids))
+
+        try:
+            result = await self.session.execute(stmt)
+            await self.session.commit()
+            deleted_count = result.rowcount or 0
+            logger.info(f"Удалено {deleted_count} документов из БД")
+            return deleted_count
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при удалении документов: {e}")
             raise

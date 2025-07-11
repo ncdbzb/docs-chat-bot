@@ -45,13 +45,27 @@ class MinioClient:
             logger.error(f"Ошибка загрузки {object_name} в MinIO: {e}")
             raise
 
-    def delete_document(self, object_name: str) -> None:
-        object_name = self._get_object_name(object_name)
+    def delete_documents(self, object_names: str | list[str]) -> None:
+        if isinstance(object_names, str):
+            object_names = [object_names]
+
+        full_names = [self._get_object_name(name) for name in object_names]
+
         try:
-            self.client.remove_object(self.bucket_name, object_name)
-            logger.info(f"Файл успешно удалён из MinIO: {object_name}")
+            errors = self.client.remove_objects(
+                bucket_name=self.bucket_name,
+                delete_object_list=[{"name": name} for name in full_names]
+            )
+
+            failed = list(errors)
+            if failed:
+                for err in failed:
+                    logger.error(f"Ошибка удаления {err.name} из MinIO: {err}")
+                raise S3Error("Ошибка при удалении одного или нескольких объектов из MinIO")
+
+            logger.info(f"Файлы успешно удалены из MinIO: {full_names}")
         except S3Error as e:
-            logger.error(f"Ошибка удаления {object_name} из MinIO: {e}")
+            logger.error(f"Ошибка при удалении объектов из MinIO: {e}")
             raise
 
     def list_documents(self) -> list[str]:
@@ -59,7 +73,7 @@ class MinioClient:
         try:
             objects = self.client.list_objects(bucket_name=self.bucket_name, prefix=prefix, recursive=True)
             object_names = [obj.object_name for obj in objects]
-            logger.info(f"Получено {len(object_names)} объектов из MinIO с префиксом '{prefix}'")
+            logger.info(f"Получено {len(object_names)} объектов из MinIO")
             return object_names
         except S3Error as e:
             logger.error(f"Ошибка при получении списка объектов из MinIO: {e}")

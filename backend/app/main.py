@@ -6,12 +6,17 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from app.routers import include_routers
 from app.auth.init_db import delayed_admin_init
+from app.documents.sync_service import sync_documents_with_storage
+from app.database import async_session_maker
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    asyncio.create_task(delayed_admin_init())
-    yield
+    async with async_session_maker() as session:
+        asyncio.create_task(delayed_admin_init(session))
+        await sync_documents_with_storage(session)
+        
+        yield
 
 
 app = FastAPI(
