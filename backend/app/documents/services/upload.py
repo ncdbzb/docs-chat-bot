@@ -1,9 +1,8 @@
 import uuid
 from fastapi import UploadFile, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.documents.schemas import DocumentCreateResponse
-from app.documents.repository import DocumentRepository
+from app.clients.repository_client import DocumentRepository
 from app.clients.minio_client import MinioClient
 from app.auth.models import AuthUser
 from app.logger import logger
@@ -12,15 +11,13 @@ from app.logger import logger
 MAX_FILE_SIZE_MB = 100
 ALLOWED_EXTENSIONS = {".txt"}
 
-minio_client = MinioClient()
-
-
 async def save_document(
     file: UploadFile,
     user: AuthUser,
-    session: AsyncSession,
     doc_name: str,
     doc_description: str,
+    minio_client: MinioClient,
+    repo: DocumentRepository,
 ) -> DocumentCreateResponse:
     logger.info(f"Начало загрузки документа пользователем {user.id}: {file.filename}")
 
@@ -41,8 +38,6 @@ async def save_document(
     if file_size > MAX_FILE_SIZE_MB * 1024 * 1024:
         logger.warning("Файл превышает допустимый размер")
         raise HTTPException(status_code=400, detail="Размер файла превышает 100MB")
-
-    repo = DocumentRepository(session)
 
     if await repo.is_name_exists_for_user(user.id, doc_name):
         raise HTTPException(status_code=400, detail="Документ с таким именем уже существует")

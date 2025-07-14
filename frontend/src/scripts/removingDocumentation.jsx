@@ -2,7 +2,7 @@ const apiUrl = process.env.REACT_APP_API_URL;
 
 export const RemovingDocumentation = async (doc_name) => {
     try {
-        const response = await fetch(`${apiUrl}/docks/delete-my?doc_name=${doc_name}`, {
+        const response = await fetch(`${apiUrl}/documents/delete-my?doc_name=${doc_name}`, {
             method: "DELETE",
             credentials: "include",
             headers: {

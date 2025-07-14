@@ -8,13 +8,16 @@ from app.routers import include_routers
 from app.auth.init_db import delayed_admin_init
 from app.documents.sync_service import sync_documents_with_storage
 from app.database import async_session_maker
+from app.dependencies.minio import get_minio_client
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with async_session_maker() as session:
-        asyncio.create_task(delayed_admin_init(session))
-        await sync_documents_with_storage(session)
+        asyncio.create_task(delayed_admin_init(session=session))
+
+        minio_client = get_minio_client()
+        await sync_documents_with_storage(session=session, minio_client=minio_client)
         
         yield
 

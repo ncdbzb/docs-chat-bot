@@ -64,7 +64,7 @@ class MinioClient:
                     logger.error(f"Ошибка удаления {err.name} из MinIO: {err}")
                 raise S3Error("Ошибка при удалении одного или нескольких объектов из MinIO")
 
-            logger.info(f"Файлы успешно удалены из MinIO: {full_names}")
+            logger.info(f"Удалено {len(full_names)} документов из MinIO: {full_names}")
         except S3Error as e:
             logger.error(f"Ошибка при удалении объектов из MinIO: {e}")
             raise

@@ -1,15 +1,15 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.minio_client import MinioClient
-from app.documents.repository import DocumentRepository
+from app.clients.repository_client import DocumentRepository
 from app.logger import logger
 
 
-async def sync_documents_with_storage(session: AsyncSession, minio_client: MinioClient = MinioClient()):
+async def sync_documents_with_storage(session: AsyncSession, minio_client: MinioClient):
     repo = DocumentRepository(session)
 
     # Получаем документы из Postgres
-    postgres_docs = await repo.get_all_documents()
+    postgres_docs = await repo.get_all_documents_from_repo()
     postgres_keys = {doc["storage_key"]: doc["id"] for doc in postgres_docs}
     postgres_key_set = set(postgres_keys.keys())
 
