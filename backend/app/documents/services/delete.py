@@ -16,7 +16,7 @@ async def delete_document(doc_name: str, user: AuthUser, repo: DocumentRepositor
 
     try:
         # Получаем storage_key по имени документа
-        storage_key = await repo.get_storage_key_by_name(doc_name)
+        storage_key = (await repo.get_document_by_name(doc_name)).storage_key
 
         # Удаляем объект из MinIO
         minio_client.delete_documents(storage_key)

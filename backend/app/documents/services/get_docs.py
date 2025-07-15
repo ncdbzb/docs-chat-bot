@@ -1,13 +1,12 @@
 from app.auth.models import AuthUser
 from app.clients.repository_client import DocumentRepository
+from app.documents.schemas import DocumentShort
 
 
-async def get_user_documents(user: AuthUser, repo: DocumentRepository):
+async def get_user_documents(user: AuthUser, repo: DocumentRepository) -> list[DocumentShort]:
     return await repo.get_my_documents_from_repo(user_id=user.id)
 
 
-async def get_all_documents(repo: DocumentRepository):
-    return [
-        {"name": doc.get("name"), "description": doc.get("description")}
-        for doc in await repo.get_all_documents_from_repo()
-    ]
+async def get_all_documents(repo: DocumentRepository) -> list[DocumentShort]:
+    documents = await repo.get_all_documents_from_repo()
+    return [DocumentShort(name=doc.name, description=doc.description) for doc in documents]

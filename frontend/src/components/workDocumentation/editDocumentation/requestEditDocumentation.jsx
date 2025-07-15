@@ -12,7 +12,7 @@ export const useRequestEditDocumentation = () => {
               description: description,
             };
 
-            const response = await fetch(`${apiUrl}/docks/change_data`, {
+            const response = await fetch(`${apiUrl}/documents/change_data`, {
                 method: 'PATCH',
                 credentials: 'include',
                 body: JSON.stringify(data),

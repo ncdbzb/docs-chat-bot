@@ -1,10 +1,10 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import insert, select, delete
+from sqlalchemy import insert, select, delete, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.documents.models import documents
-from app.documents.schemas import DocumentCreateResponse
+from app.documents.schemas import DocumentCreateResponse, Document, DocumentShort
 from app.logger import logger
 
 
@@ -84,45 +84,73 @@ class DocumentRepository:
             logger.error(f"Ошибка при удалении документов по имени: {e}")
             raise
 
-    async def get_storage_key_by_name(self, doc_name: str) -> str:
+    async def update_document_by_name(self, current_name: str, fields: dict) -> None:
         try:
-            stmt = select(documents.c.storage_key).where(
-                documents.c.name == doc_name
+            stmt = (
+                update(documents)
+                .where(documents.c.name == current_name)
+                .values(**fields)
             )
-            result = await self.session.execute(stmt)
-            row = result.scalar_one_or_none()
-
-            if row is None:
-                logger.warning(f"Документ с именем '{doc_name}' не найден в БД.")
-                raise ValueError(f"Документ с именем '{doc_name}' не найден.")
-
-            return row
-
+            await self.session.execute(stmt)
+            await self.session.commit()
+            logger.info(f"Документ '{current_name}' обновлён: {fields}")
         except SQLAlchemyError as e:
-            logger.error(f"Ошибка при получении storage_key для документа '{doc_name}': {e}")
+            logger.error(f"Ошибка при обновлении документа '{current_name}': {e}")
             raise
 
+    # async def get_storage_key_by_name(self, doc_name: str) -> str:
+    #     try:
+    #         stmt = select(documents.c.storage_key).where(
+    #             documents.c.name == doc_name
+    #         )
+    #         result = await self.session.execute(stmt)
+    #         row = result.scalar_one_or_none()
 
-    async def get_all_documents_from_repo(self) -> list[dict]:
+    #         if row is None:
+    #             logger.warning(f"Документ с именем '{doc_name}' не найден в БД.")
+    #             raise ValueError(f"Документ с именем '{doc_name}' не найден.")
+
+    #         return row
+
+    #     except SQLAlchemyError as e:
+    #         logger.error(f"Ошибка при получении storage_key для документа '{doc_name}': {e}")
+    #         raise
+
+    async def get_document_by_name(self, doc_name: str) -> Document:
+        try:
+            stmt = select(documents).where(documents.c.name == doc_name)
+            result = await self.session.execute(stmt)
+            row = result.mappings().first()
+
+            if row is None:
+                raise ValueError(f"Документ с именем '{doc_name}' не найден.")
+
+            return Document.model_validate(row)
+
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при получении документа '{doc_name}': {e}")
+            raise
+
+    async def get_all_documents_from_repo(self) -> list[Document]:
         stmt = select(documents)
         try:
             result = await self.session.execute(stmt)
-            rows = result.fetchall()
+            rows = result.mappings().all()
             logger.info(f"Получено {len(rows)} документов из БД")
-            return [row._mapping for row in rows]
+            return [Document.model_validate(row) for row in rows]
+
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при получении документов: {e}")
             raise
 
-    async def get_my_documents_from_repo(self, user_id: uuid.UUID):
+    async def get_my_documents_from_repo(self, user_id: uuid.UUID) -> list[DocumentShort]:
         try:
-            stmt = select(documents.c.name, documents.c.description).where(
-                documents.c.user_id == user_id
-            )
+            stmt = select(documents.c.name, documents.c.description).where(documents.c.user_id == user_id)
             result = await self.session.execute(stmt)
-            docs = result.mappings().all()
-            logger.info(f"Найдено {len(docs)} документов для пользователя {user_id}")
-            return docs
+            rows = result.mappings().all()
+            logger.info(f"Найдено {len(rows)} документов для пользователя {user_id}")
+            return [DocumentShort.model_validate(row) for row in rows]
+
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при получении документов пользователя {user_id}: {e}")
             raise

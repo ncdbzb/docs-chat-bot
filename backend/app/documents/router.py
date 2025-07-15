@@ -1,20 +1,20 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.minio_client import MinioClient
 from app.clients.repository_client import DocumentRepository
 from app.dependencies.minio import get_minio_client
 from app.dependencies.repository import get_document_repository
 from app.documents.services.upload import save_document
+from app.documents.services.update import update_document
 from app.documents.services.get_docs import get_user_documents, get_all_documents
 from app.documents.services.delete import delete_document
-from app.documents.schemas import DocumentCreateResponse
-from app.database import get_async_session
+from app.documents.schemas import DocumentCreateResponse, DocumentUpdate
 from app.auth.models import AuthUser
 from app.auth.auth_config import current_superuser, current_user
 
 
 router = APIRouter()
+
 
 @router.post(
     "/upload",
@@ -66,3 +66,15 @@ async def del_my_docs(
     repo: DocumentRepository = Depends(get_document_repository),
 ):
     await delete_document(doc_name=doc_name, user=user, repo=repo, minio_client=minio_client)
+
+
+@router.patch(
+    "/change_data",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def change_doc_data(
+    payload: DocumentUpdate,
+    user: AuthUser = Depends(current_user),
+    repo: DocumentRepository = Depends(get_document_repository),
+):
+    await update_document(payload=payload, user=user, repo=repo)

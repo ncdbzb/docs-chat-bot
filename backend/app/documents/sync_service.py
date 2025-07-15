@@ -10,7 +10,7 @@ async def sync_documents_with_storage(session: AsyncSession, minio_client: Minio
 
     # Получаем документы из Postgres
     postgres_docs = await repo.get_all_documents_from_repo()
-    postgres_keys = {doc["storage_key"]: doc["id"] for doc in postgres_docs}
+    postgres_keys = {doc.storage_key: doc.id for doc in postgres_docs}
     postgres_key_set = set(postgres_keys.keys())
 
     # Получаем объекты из MinIO
