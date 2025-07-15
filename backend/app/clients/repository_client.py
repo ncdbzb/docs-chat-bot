@@ -4,7 +4,7 @@ from sqlalchemy import insert, select, delete, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.documents.models import documents
-from app.documents.schemas import DocumentCreateResponse, Document, DocumentShort
+from app.documents.schemas import DocumentCreateResponse, Document, DocumentShort, DocumentCreateMeta
 from app.logger import logger
 
 
@@ -16,9 +16,8 @@ class DocumentRepository:
         self,
         *,
         doc_id: uuid.UUID,
-        name: str,
+        metadata: DocumentCreateMeta,
         original_filename: str,
-        description: str,
         type: str,
         size: int,
         user_id: uuid.UUID,
@@ -28,9 +27,9 @@ class DocumentRepository:
             insert(documents)
             .values(
                 id=doc_id,
-                name=name,
+                name=metadata.name,
                 original_filename=original_filename,
-                description=description,
+                description=metadata.description,
                 type=type,
                 size=size,
                 user_id=user_id,
@@ -41,7 +40,7 @@ class DocumentRepository:
         try:
             result = await self.session.execute(stmt)
             await self.session.commit()
-            logger.info(f"Документ '{name}' добавлен в БД с ID {doc_id}")
+            logger.info(f"Документ '{metadata.name}' добавлен в БД с ID {doc_id}")
             return DocumentCreateResponse(**result.fetchone()._mapping)
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при добавлении документа в БД: {e}")

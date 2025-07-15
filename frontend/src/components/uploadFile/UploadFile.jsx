@@ -30,8 +30,8 @@ const FormTest = () => {
     const onSubmitDock = async (data) => {
         setServerError('')
         const formDatas = new FormData();
-        formDatas.append('doc_name', dockName);
-        formDatas.append('doc_description', dockDescription);
+        formDatas.append('name', dockName);
+        formDatas.append('description', dockDescription);
         formDatas.append('file', data.files[0]);
         setLoading(true); // Показываем spinner
         try {

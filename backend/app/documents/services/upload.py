@@ -1,7 +1,7 @@
 import uuid
 from fastapi import UploadFile, HTTPException
 
-from app.documents.schemas import DocumentCreateResponse
+from app.documents.schemas import DocumentCreateResponse, DocumentCreateMeta
 from app.clients.repository_client import DocumentRepository
 from app.clients.minio_client import MinioClient
 from app.auth.models import AuthUser
@@ -14,8 +14,7 @@ ALLOWED_EXTENSIONS = {".txt"}
 async def save_document(
     file: UploadFile,
     user: AuthUser,
-    doc_name: str,
-    doc_description: str,
+    metadata: DocumentCreateMeta,
     minio_client: MinioClient,
     repo: DocumentRepository,
 ) -> DocumentCreateResponse:
@@ -39,7 +38,7 @@ async def save_document(
         logger.warning("Файл превышает допустимый размер")
         raise HTTPException(status_code=400, detail="Размер файла превышает 100MB")
 
-    if await repo.is_name_exists_for_user(user.id, doc_name):
+    if await repo.is_name_exists_for_user(user.id, metadata.name):
         raise HTTPException(status_code=400, detail="Документ с таким именем уже существует")
 
     file_type = file.filename.split(".")[-1].lower()
@@ -60,9 +59,8 @@ async def save_document(
     try:
         return await repo.add_document(
             doc_id=doc_id,
-            name=doc_name,
+            metadata=metadata,
             original_filename=file.filename,
-            description=doc_description,
             type=file_type,
             size=file_size,
             user_id=user.id,

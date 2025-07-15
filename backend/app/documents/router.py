@@ -8,7 +8,7 @@ from app.documents.services.upload import save_document
 from app.documents.services.update import update_document
 from app.documents.services.get_docs import get_user_documents, get_all_documents
 from app.documents.services.delete import delete_document
-from app.documents.schemas import DocumentCreateResponse, DocumentUpdate
+from app.documents.schemas import DocumentCreateResponse, DocumentUpdate, DocumentCreateMeta
 from app.auth.models import AuthUser
 from app.auth.auth_config import current_superuser, current_user
 
@@ -22,9 +22,8 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED
 )
 async def upload_document(
-    doc_name: str = Form(...),
-    doc_description: str = Form(...),
     file: UploadFile = File(...),
+    metadata: DocumentCreateMeta = Depends(DocumentCreateMeta.as_form),
     user: AuthUser = Depends(current_user),
     minio_client: MinioClient = Depends(get_minio_client),
     repo: DocumentRepository = Depends(get_document_repository),
@@ -32,8 +31,7 @@ async def upload_document(
     return await save_document(
         file=file,
         user=user,
-        doc_name=doc_name,
-        doc_description=doc_description,
+        metadata=metadata,
         minio_client=minio_client,
         repo=repo,
     )
