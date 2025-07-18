@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.minio_client import MinioClient
-from app.clients.repository_client import DocumentRepository
+from app.documents.doc_repository import DocumentRepository
 from app.logger import logger
 
 

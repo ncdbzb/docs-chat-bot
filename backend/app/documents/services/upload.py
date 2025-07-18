@@ -2,7 +2,7 @@ import uuid
 from fastapi import UploadFile, HTTPException
 
 from app.documents.schemas import DocumentCreateResponse, DocumentCreateMeta
-from app.clients.repository_client import DocumentRepository
+from app.documents.doc_repository import DocumentRepository
 from app.clients.minio_client import MinioClient
 from app.auth.models import AuthUser
 from app.logger import logger

@@ -243,7 +243,6 @@ const InformationUser = () => {
                     </div>
                 </form>
             )}
-            <Leaderboard />
         </section>
     );
 };

@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from app.clients.repository_client import DocumentRepository
+from app.documents.doc_repository import DocumentRepository
 from app.documents.schemas import DocumentUpdate
 from app.auth.models import AuthUser
 

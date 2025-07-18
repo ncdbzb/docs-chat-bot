@@ -10,7 +10,7 @@ from app.auth.models import AuthUser
 from app.auth.utils import get_user_db
 from app.tasks.email_task import send_email
 from app.database import async_session_maker
-# from app.admin_panel.utils import add_admin_request
+from app.admin_requests.services.admin_service import add_pending_request
 from app.config import settings
 from app.logger import logger
 
@@ -23,9 +23,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[AuthUser, uuid.UUID]):
     async def on_after_register(self, user: AuthUser, request: Optional[Request] = None):
         logger.info(f"User {user.email} has registered.")
 
-        if settings.VERIFY_AFTER_REGISTER:
-            # async with async_session_maker() as session:
-            #     await add_admin_request(user.email, session=session)
+        if settings.VERIFY_AFTER_REGISTER and user.email != settings.ADMIN_EMAIL:
+            async with async_session_maker() as session:
+                await add_pending_request(session=session, user=user)
 
             send_email.delay(name=user.name, user_email=user.email, destiny='approval')
             if settings.SEND_ADMIN_NOTICES:
@@ -128,7 +128,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[AuthUser, uuid.UUID]):
             user_dict.update({
                 "is_active": True,
                 "is_superuser": False,
-                "is_verified": True,
+                "is_verified": not settings.VERIFY_AFTER_REGISTER,
             })
 
         user_dict["hashed_password"] = self.password_helper.hash(password)

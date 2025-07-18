@@ -16,7 +16,7 @@ def get_approval_email_template(name: str, user_email: str) -> EmailMessage:
         '<div>'
         f'<h1>Здравствуйте, {name}</h1>'
         '<p>Мы получили Вашу заявку! В ближайшее время администратор её проверит, и Вы получите ответ.</p>'
-        '</div>',
+        '</div>'
     )
     return create_email("Заявка", user_email, html)
 
@@ -27,7 +27,7 @@ def get_accepted_request_email_template(name: str, user_email: str, token: str) 
         f'<h1>Здравствуйте, {name}</h1>'
         '<p>Ваша заявка одобрена! Чтобы верифицировать аккаунт, перейдите по <b>ссылке</b><br>Ссылка будет доступна в течении 1 суток.</p>'
         f'<p>https://{settings.SERVER_DOMAIN}/logIn?token={token}</p>'
-        '</div>',
+        '</div>'
     )
     return create_email("Заявка", user_email, html)
 
@@ -37,7 +37,7 @@ def get_rejected_request_email_template(name: str, user_email: str,) -> EmailMes
         '<div>'
         f'<h1>Здравствуйте, {name}</h1>'
         '<p>Ваша заявка отклонена.</p>'
-        '</div>',
+        '</div>'
     )
     return create_email("Заявка", user_email, html)
 
@@ -48,7 +48,7 @@ def get_forgot_email_template(name: str, user_email: str, token: str) -> EmailMe
         f'<h1>Здравствуйте, {name}</h1>'
         '<p>Чтобы сбросить пароль, перейдите по <b>ссылке</b></p>'
         f'<p>https://{settings.SERVER_DOMAIN}/reset_password?token={token}</p>'
-        '</div>',
+        '</div>'
     )
     return create_email("Сброс пароля", user_email, html)
 
@@ -72,7 +72,7 @@ def get_admin_approval_email_template(name: str, surname: str, user_email: str) 
     '<td>Представитель организации</td>'
     '</tr>'
     '</table>'
-    '</div>',
+    '</div>'
 )
     return create_email("Новая заявка на регистрацию", settings.ADMIN_EMAIL, html)
 
@@ -119,7 +119,7 @@ def get_time_limit_qa_template(
     f'<td style="word-break: break-word;">{answer.replace(chr(10), "<br>")}</td>'
     '</tr>'
     '</table>'
-    '</div>',
+    '</div>'
 )
     return create_email("Превышен временной лимит в вопросно-ответной системе!", settings.ADMIN_EMAIL, html)
 
@@ -176,6 +176,6 @@ def get_time_limit_test_template(
     f'<td style="word-break: break-word;">{right_answer}</td>'
     '</tr>'
     '</table>'
-    '</div>',
+    '</div>'
 )
     return create_email("Превышен временной лимит в тестовой системе!", settings.ADMIN_EMAIL, html)

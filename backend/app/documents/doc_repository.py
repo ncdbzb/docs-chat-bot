@@ -97,24 +97,6 @@ class DocumentRepository:
             logger.error(f"Ошибка при обновлении документа '{current_name}': {e}")
             raise
 
-    # async def get_storage_key_by_name(self, doc_name: str) -> str:
-    #     try:
-    #         stmt = select(documents.c.storage_key).where(
-    #             documents.c.name == doc_name
-    #         )
-    #         result = await self.session.execute(stmt)
-    #         row = result.scalar_one_or_none()
-
-    #         if row is None:
-    #             logger.warning(f"Документ с именем '{doc_name}' не найден в БД.")
-    #             raise ValueError(f"Документ с именем '{doc_name}' не найден.")
-
-    #         return row
-
-    #     except SQLAlchemyError as e:
-    #         logger.error(f"Ошибка при получении storage_key для документа '{doc_name}': {e}")
-    #         raise
-
     async def get_document_by_name(self, doc_name: str) -> Document:
         try:
             stmt = select(documents).where(documents.c.name == doc_name)

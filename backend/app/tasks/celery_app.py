@@ -7,6 +7,7 @@ celery_app = Celery(
     'tasks',
     broker=settings.redis_url,
     result_backend=settings.redis_url,
+    include=['app.tasks.email_task']
 )
 
 celery_app.conf.update(

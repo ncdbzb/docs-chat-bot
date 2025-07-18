@@ -12,7 +12,7 @@ from app.config import settings
 from app.auth.models import metadata as auth_metadata
 from app.documents.models import metadata as docs_metadata
 # from src.llm_service.models import metadata as llm_service_metadata
-# from src.admin_panel.models import metadata as admin_panel_metadata
+from app.admin_requests.models import metadata as admin_panel_metadata
 config = context.config
 
 section = config.config_ini_section
@@ -34,7 +34,7 @@ target_metadata = [
     auth_metadata,
     docs_metadata,
     # llm_service_metadata,
-    # admin_panel_metadata
+    admin_panel_metadata
 ]
 
 # other values from the config, defined by the needs of env.py,

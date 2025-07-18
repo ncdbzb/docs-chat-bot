@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     # Service settings
     SEND_ADMIN_NOTICES: bool = Field(default=False)
     VERIFY_AFTER_REGISTER: bool = Field(default=False)
+    VERIFY_URL_LIFETIME_SECONDS: int
 
     class Config:
         env_file = ".env"

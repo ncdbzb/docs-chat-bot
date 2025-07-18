@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, status
+from fastapi import APIRouter, Depends, UploadFile, File, Query, status
 
 from app.clients.minio_client import MinioClient
-from app.clients.repository_client import DocumentRepository
+from app.documents.doc_repository import DocumentRepository
 from app.dependencies.minio import get_minio_client
 from app.dependencies.repository import get_document_repository
 from app.documents.services.upload import save_document
