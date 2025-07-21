@@ -79,6 +79,10 @@ services:
       dockerfile: Dockerfile.docs_api
     env_file:
       - .env
+    environment: &minio-env
+      MINIO_ENDPOINT: ${MINIO_DOMAIN}:${MINIO_API_PORT}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
     container_name: docs_api
     expose:
       - ${DOCS_API_PORT}
@@ -101,9 +105,7 @@ services:
     env_file:
       - .env
     environment:
-      - MINIO_ENDPOINT=${MINIO_DOMAIN}:${MINIO_API_PORT}
-      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
-      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      <<: *minio-env
     container_name: backend
     restart: always
     volumes:

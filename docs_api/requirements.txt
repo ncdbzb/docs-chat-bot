@@ -2,5 +2,9 @@ fastapi
 uvicorn[standard]
 openai
 langchain
+langchain-chroma
+chromadb
 requests
 python-dotenv
+minio
+pydantic-settings

@@ -1,6 +1,5 @@
 import chromadb
 from chromadb.config import Settings
-from langchain.schema import Document
 from langchain_chroma import Chroma
 
 from app.config import settings
@@ -43,27 +42,27 @@ class ChromaDBManager:
             logger.error(f"Не удалось получить размер коллекции '{collection_name}': {e}")
             return 0
 
-    def _add_documents(self, collection_name: str, docs: list[Document]) -> list[str]:
+    def _add_texts(self, collection_name: str, docs: list[str]) -> list[str]:
         """Добавляет документы в указанную коллекцию Chroma."""
         vectorstore = self.get_vectorstore(collection_name)
         max_attempts = 3
 
         for attempt in range(1, max_attempts + 1):
             try:
-                return vectorstore.add_documents(docs)
+                return vectorstore.add_texts(docs)
             except Exception as e:
                 logger.error(f"Ошибка при добавлении документов в Chroma (попытка {attempt}): {e}")
         logger.error("Документы не были добавлены в Chroma после всех попыток.")
         return []
 
-    def add_chunks(self, collection_name: str, splitted_docs: list[Document]) -> list[str]:
+    def add_chunks(self, collection_name: str, splitted_docs: list[str]) -> list[str]:
         """Добавляет чанки документа в указанную коллекцию."""
         if not splitted_docs:
             logger.info("Список чанков пуст — добавление в Chroma пропущено.")
             return []
 
         logger.info(f"Добавление {len(splitted_docs)} чанков в коллекцию '{collection_name}'...")
-        chunk_ids = self._add_documents(collection_name, splitted_docs)
+        chunk_ids = self._add_texts(collection_name, splitted_docs)
         total_chunks = self.get_collection_length(collection_name)
 
         logger.info(

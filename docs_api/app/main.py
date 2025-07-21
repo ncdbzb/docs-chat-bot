@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from app.routers import include_routers
 
+
+app = FastAPI(title="DOCS-API")
+
+include_routers(app)
 
 @app.get("/ping")
 async def ping():

@@ -1,16 +1,15 @@
-import os
 from dotenv import load_dotenv
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 load_dotenv()
 
 
 class Settings(BaseSettings):
     # OpenAI API
-    OPENAI_API_URL: str = os.getenv("OPENAI_API_URL")
-    LLM_API_KEY: str = os.getenv("LLM_API_KEY")
-    LLM_MODEL: str = os.getenv("LLM_MODEL")
-    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL")
+    OPENAI_API_URL: str
+    LLM_API_KEY: str
+    LLM_MODEL: str
+    EMBEDDING_MODEL: str
 
     # ChromaDB
     CHROMADB_HOST: str
@@ -19,6 +18,14 @@ class Settings(BaseSettings):
     CHROMADB_PORT: int  
     CHROMA_DOCS_COLLECTION_NAME: str  
     PERSIST_DIRECTORY: str
+
+    # Minio
+    MINIO_ENDPOINT: str
+    MINIO_ACCESS_KEY: str
+    MINIO_SECRET_KEY: str
+    MINIO_SECURE: bool = False
+    MINIO_BUCKET_NAME: str
+    MINIO_ROOT_PATH: str
 
 
 settings = Settings()

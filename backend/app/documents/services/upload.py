@@ -1,4 +1,5 @@
 import uuid
+import httpx
 from fastapi import UploadFile, HTTPException
 
 from app.documents.schemas import DocumentCreateResponse, DocumentCreateMeta
@@ -57,7 +58,7 @@ async def save_document(
         raise HTTPException(status_code=500, detail="Ошибка при сохранении в MinIO")
 
     try:
-        return await repo.add_document(
+        result = await repo.add_document(
             doc_id=doc_id,
             metadata=metadata,
             original_filename=file.filename,
@@ -73,3 +74,18 @@ async def save_document(
         except Exception as minio_err:
             logger.critical(f"Ошибка при удалении из MinIO после сбоя: {minio_err}")
         raise HTTPException(status_code=500, detail="Ошибка при сохранении документа")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                "http://docs_api:8080/documents/ingest",
+                json={
+                    "document_id": str(doc_id),
+                    "storage_key": object_name,
+                    "original_filename": file.filename,
+                }
+                )
+    except Exception as e:
+        logger.error(f"Ошибка при вызове docs_api для обработки документа: {e}")
+    
+    return result
