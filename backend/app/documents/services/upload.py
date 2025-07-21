@@ -5,6 +5,7 @@ from fastapi import UploadFile, HTTPException
 from app.documents.schemas import DocumentCreateResponse, DocumentCreateMeta
 from app.documents.doc_repository import DocumentRepository
 from app.clients.minio_client import MinioClient
+from app.clients.docs_api_client import DocsApiClient
 from app.auth.models import AuthUser
 from app.logger import logger
 
@@ -18,6 +19,7 @@ async def save_document(
     metadata: DocumentCreateMeta,
     minio_client: MinioClient,
     repo: DocumentRepository,
+    docs_api_client: DocsApiClient,
 ) -> DocumentCreateResponse:
     logger.info(f"Начало загрузки документа пользователем {user.id}: {file.filename}")
 
@@ -76,15 +78,11 @@ async def save_document(
         raise HTTPException(status_code=500, detail="Ошибка при сохранении документа")
     
     try:
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                "http://docs_api:8080/documents/ingest",
-                json={
-                    "document_id": str(doc_id),
-                    "storage_key": object_name,
-                    "original_filename": file.filename,
-                }
-                )
+        await docs_api_client.ingest_document(
+            document_id=str(doc_id),
+            storage_key=object_name,
+            original_filename=file.filename,
+        )
     except Exception as e:
         logger.error(f"Ошибка при вызове docs_api для обработки документа: {e}")
     

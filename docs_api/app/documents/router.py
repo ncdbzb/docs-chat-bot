@@ -21,4 +21,3 @@ async def ingest(
         chromadb_manager=chromadb_manager,
     )
     return {"detail": "Document successfully ingested"}
-

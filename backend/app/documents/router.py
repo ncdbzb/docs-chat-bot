@@ -4,6 +4,7 @@ from app.clients.minio_client import MinioClient
 from app.documents.doc_repository import DocumentRepository
 from app.dependencies.minio import get_minio_client
 from app.dependencies.repository import get_document_repository
+from app.dependencies.docs_api import get_docs_api_client, DocsApiClient
 from app.documents.services.upload import save_document
 from app.documents.services.update import update_document
 from app.documents.services.get_docs import get_user_documents, get_all_documents
@@ -27,6 +28,7 @@ async def upload_document(
     user: AuthUser = Depends(current_user),
     minio_client: MinioClient = Depends(get_minio_client),
     repo: DocumentRepository = Depends(get_document_repository),
+    docs_api_client: DocsApiClient = Depends(get_docs_api_client),
 ):
     return await save_document(
         file=file,
@@ -34,6 +36,7 @@ async def upload_document(
         metadata=metadata,
         minio_client=minio_client,
         repo=repo,
+        docs_api_client=docs_api_client,
     )
 
 
