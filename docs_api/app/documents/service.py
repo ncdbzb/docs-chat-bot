@@ -38,3 +38,13 @@ async def ingest_document(
         raise
 
     logger.info(f'Коллекции: {chromadb_manager._client.list_collections()}')
+
+
+async def delete_collection(document_id: str, chromadb_manager: ChromaDBManager):
+    logger.info(f"Удаление коллекции {document_id} из ChromaDB")
+
+    try:
+        chromadb_manager.delete_collection(document_id)
+    except Exception as e:
+        logger.error(f"Ошибка удаления коллекции {document_id}: {e}")
+        raise

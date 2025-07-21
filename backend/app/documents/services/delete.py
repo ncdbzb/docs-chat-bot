@@ -3,9 +3,16 @@ from fastapi import HTTPException, status
 from app.auth.models import AuthUser
 from app.documents.doc_repository import DocumentRepository
 from app.clients.minio_client import MinioClient
+from app.clients.docs_api_client import DocsApiClient
 
 
-async def delete_document(doc_name: str, user: AuthUser, repo: DocumentRepository, minio_client: MinioClient):
+async def delete_document(
+    doc_name: str,
+    user: AuthUser,
+    repo: DocumentRepository,
+    minio_client: MinioClient,
+    docs_api_client: DocsApiClient
+):
     if not await repo.document_exists(doc_name):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
 
@@ -16,17 +23,20 @@ async def delete_document(doc_name: str, user: AuthUser, repo: DocumentRepositor
 
     try:
         # Получаем storage_key по имени документа
-        storage_key = (await repo.get_document_by_name(doc_name)).storage_key
+        document = await repo.get_document_by_name(doc_name)
+        storage_key = document.storage_key
+        doc_id = str(document.id)
 
         # Удаляем объект из MinIO
         minio_client.delete_documents(storage_key)
+
+        # Удаляем из ChromaDB
+        await docs_api_client.delete_document(doc_id)
 
         # Удаляем запись из базы данных
         await repo.delete_document_by_name(doc_name)
     
     except ValueError as ve:
-    # Обрабатываем случай, когда документ не найден
         raise HTTPException(status_code=404, detail=str(ve))
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete document: {e}")

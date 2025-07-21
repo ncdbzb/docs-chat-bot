@@ -65,8 +65,15 @@ async def del_my_docs(
     user: AuthUser = Depends(current_user),
     minio_client: MinioClient = Depends(get_minio_client),
     repo: DocumentRepository = Depends(get_document_repository),
+    docs_api_client: DocsApiClient = Depends(get_docs_api_client),
 ):
-    await delete_document(doc_name=doc_name, user=user, repo=repo, minio_client=minio_client)
+    await delete_document(
+        doc_name=doc_name,
+        user=user,
+        repo=repo,
+        minio_client=minio_client,
+        docs_api_client=docs_api_client,
+    )
 
 
 @router.patch(
