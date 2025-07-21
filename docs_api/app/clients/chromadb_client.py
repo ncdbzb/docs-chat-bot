@@ -1,7 +1,7 @@
 import chromadb
 from chromadb.config import Settings
+from langchain.schema import Document
 from langchain_chroma import Chroma
-from time import time
 
 from app.config import settings
 from app.logger import logger
@@ -9,46 +9,72 @@ from app.clients.openai_api_client import CustomOllamaEmbeddings
 
 
 class ChromaDBManager:
-    def __init__(self, collection_name: str):
-        self._collection_name = collection_name
+    def __init__(self):
         self._client = chromadb.HttpClient(
-            host=settings.chromadb_host,
-            port=settings.chromadb_port,
+            host=settings.CHROMADB_HOST,
+            port=settings.CHROMADB_PORT,
             settings=Settings(
                 is_persistent=True,
-                persist_directory=settings.persist_directory,
-                chroma_client_auth_provider=settings.chroma_client_auth_provider,
-                chroma_client_auth_credentials=settings.chroma_server_authn_credentials,
+                persist_directory=settings.PERSIST_DIRECTORY,
+                chroma_client_auth_provider=settings.CHROMA_CLIENT_AUTH_PROVIDER,
+                chroma_client_auth_credentials=settings.CHROMA_SERVER_AUTHN_CREDENTIALS,
             ),
         )
         self.embeddings = CustomOllamaEmbeddings()
-        self._chroma_collection = self._client.get_or_create_collection(
-            name=self._collection_name,
-            metadata={"timestamp": time()}
+
+    def get_vectorstore(self, collection_name: str) -> Chroma:
+        self._get_collection(collection_name)
+
+        return Chroma(
+            client=self._client,
+            collection_name=collection_name,
+            embedding_function=self.embeddings,
+            persist_directory=settings.PERSIST_DIRECTORY,
         )
-        if not self._chroma_collection.metadata or not self._chroma_collection.metadata.get("timestamp"):
-            self._update_collection_timestamp()
 
-        self._vectorstore = None
+    def _get_collection(self, collection_name: str):
+        return self._client.get_or_create_collection(name=collection_name)
 
-    def _update_collection_timestamp(self):
+    def get_collection_length(self, collection_name: str) -> int:
         try:
-            self._chroma_collection.modify(
-                metadata={"timestamp": time()}
-            )
+            collection = self._get_collection(collection_name)
+            return collection.count()
         except Exception as e:
-            logger.warning(f"Не удалось обновить timestamp коллекции: {e}")
+            logger.error(f"Не удалось получить размер коллекции '{collection_name}': {e}")
+            return 0
 
-    @property
-    def vectorstore(self) -> Chroma:
-        if self._vectorstore is None:
-            self._vectorstore = Chroma(
-                client=self._client,
-                collection_name=self._collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=settings.persist_directory,
-            )
-        return self._vectorstore
+    def _add_documents(self, collection_name: str, docs: list[Document]) -> list[str]:
+        """Добавляет документы в указанную коллекцию Chroma."""
+        vectorstore = self.get_vectorstore(collection_name)
+        max_attempts = 3
 
-    def get_collection_length(self) -> int:
-        return self._chroma_collection.count()
+        for attempt in range(1, max_attempts + 1):
+            try:
+                return vectorstore.add_documents(docs)
+            except Exception as e:
+                logger.error(f"Ошибка при добавлении документов в Chroma (попытка {attempt}): {e}")
+        logger.error("Документы не были добавлены в Chroma после всех попыток.")
+        return []
+
+    def add_chunks(self, collection_name: str, splitted_docs: list[Document]) -> list[str]:
+        """Добавляет чанки документа в указанную коллекцию."""
+        if not splitted_docs:
+            logger.info("Список чанков пуст — добавление в Chroma пропущено.")
+            return []
+
+        logger.info(f"Добавление {len(splitted_docs)} чанков в коллекцию '{collection_name}'...")
+        chunk_ids = self._add_documents(collection_name, splitted_docs)
+        total_chunks = self.get_collection_length(collection_name)
+
+        logger.info(
+            f"Добавлено {len(chunk_ids)} чанков, всего в коллекции: {total_chunks}"
+        )
+        return chunk_ids
+
+    def delete_collection(self, collection_name: str) -> None:
+        """Удаляет коллекцию по её имени."""
+        try:
+            self._client.delete_collection(name=collection_name)
+            logger.info(f"Коллекция '{collection_name}' успешно удалена.")
+        except Exception as e:
+            logger.error(f"Ошибка при удалении коллекции '{collection_name}': {e}")

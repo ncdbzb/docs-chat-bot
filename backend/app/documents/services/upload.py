@@ -9,7 +9,7 @@ from app.logger import logger
 
 
 MAX_FILE_SIZE_MB = 100
-ALLOWED_EXTENSIONS = {".txt"}
+ALLOWED_EXTENSIONS = {".docx"}
 
 async def save_document(
     file: UploadFile,
