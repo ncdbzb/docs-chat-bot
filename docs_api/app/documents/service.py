@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from app.documents.schemas import DocumentIngestionRequest
 from app.clients.minio_client import MinioClient
 from app.clients.chromadb_client import ChromaDBManager
@@ -48,3 +50,11 @@ async def delete_collection(document_id: str, chromadb_manager: ChromaDBManager)
     except Exception as e:
         logger.error(f"Ошибка удаления коллекции {document_id}: {e}")
         raise
+
+
+async def get_list_collections(chromadb_manager: ChromaDBManager) -> list[str]:
+    try:
+        collections = chromadb_manager.get_list_collections()
+        return collections
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ошибка при получении списка коллекций")

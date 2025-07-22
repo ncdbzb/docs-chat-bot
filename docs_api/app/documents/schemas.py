@@ -6,3 +6,7 @@ class DocumentIngestionRequest(BaseModel):
     document_id: UUID
     storage_key: str
     original_filename: str
+
+
+class CollectionListResponse(BaseModel):
+    collections: list[str]

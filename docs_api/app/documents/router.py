@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 
-from app.documents.schemas import DocumentIngestionRequest
-from app.documents.service import ingest_document, delete_collection
+from app.documents.schemas import DocumentIngestionRequest, CollectionListResponse
+from app.documents.service import ingest_document, delete_collection, get_list_collections
 from app.dependencies.minio import get_minio_client, MinioClient
 from app.dependencies.chromadb_manager import get_chromadb_manager, ChromaDBManager
 
@@ -30,3 +30,15 @@ async def delete(
 ):
     await delete_collection(document_id, chromadb_manager)
     return {"detail": f"Collection {document_id} successfully deleted"}
+
+
+@router.get(
+    "/collections",
+    status_code=status.HTTP_200_OK,
+    response_model=CollectionListResponse
+)
+async def list_collections(
+    chromadb_manager: ChromaDBManager = Depends(get_chromadb_manager)
+) -> CollectionListResponse:
+    collections = await get_list_collections(chromadb_manager)
+    return CollectionListResponse(collections=collections)

@@ -33,3 +33,18 @@ class DocsApiClient:
         except httpx.HTTPError as e:
             logger.error(f"[DocsAPI] Ошибка при удалении документа {document_id}: {e}")
             raise
+
+    async def get_collections(self) -> list[str]:
+        url = f"{self.base_url}/documents/collections"
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                data = response.json()
+                collections = data.get("collections", [])
+                logger.info(f"Получено {len(collections)} объектов из ChromaDB")
+                return collections
+        except httpx.HTTPError as e:
+            logger.error(f"[DocsAPI] Ошибка при получении списка коллекций: {e}")
+            raise

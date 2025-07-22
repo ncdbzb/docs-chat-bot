@@ -41,6 +41,14 @@ class ChromaDBManager:
         except Exception as e:
             logger.error(f"Не удалось получить размер коллекции '{collection_name}': {e}")
             return 0
+    
+    def get_list_collections(self) -> list[str]:
+        try:
+            collections = self._client.list_collections()
+            return [collection.name for collection in collections]
+        except Exception as e:
+            logger.error(f"Ошибка при получении списка коллекций: {e}")
+            return []
 
     def _add_texts(self, collection_name: str, docs: list[str]) -> list[str]:
         """Добавляет документы в указанную коллекцию Chroma."""
