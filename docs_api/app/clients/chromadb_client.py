@@ -5,6 +5,7 @@ from langchain_chroma import Chroma
 from app.config import settings
 from app.logger import logger
 from app.clients.openai_api_client import CustomOllamaEmbeddings
+from app.documents.schemas import Chunk
 
 
 class ChromaDBManager:
@@ -50,27 +51,29 @@ class ChromaDBManager:
             logger.error(f"Ошибка при получении списка коллекций: {e}")
             return []
 
-    def _add_texts(self, collection_name: str, docs: list[str]) -> list[str]:
+    def _add_texts(self, collection_name: str, texts: list[str], ids: list[str]) -> list[str]:
         """Добавляет документы в указанную коллекцию Chroma."""
         vectorstore = self.get_vectorstore(collection_name)
         max_attempts = 3
 
         for attempt in range(1, max_attempts + 1):
             try:
-                return vectorstore.add_texts(docs)
+                return vectorstore.add_texts(texts=texts, ids=ids)
             except Exception as e:
                 logger.error(f"Ошибка при добавлении документов в Chroma (попытка {attempt}): {e}")
         logger.error("Документы не были добавлены в Chroma после всех попыток.")
         return []
 
-    def add_chunks(self, collection_name: str, splitted_docs: list[str]) -> list[str]:
+    def add_chunks(self, collection_name: str, chunks: list[Chunk]) -> list[str]:
         """Добавляет чанки документа в указанную коллекцию."""
-        if not splitted_docs:
+        if not chunks:
             logger.info("Список чанков пуст — добавление в Chroma пропущено.")
             return []
 
-        logger.info(f"Добавление {len(splitted_docs)} чанков в коллекцию '{collection_name}'...")
-        chunk_ids = self._add_texts(collection_name, splitted_docs)
+        logger.info(f"Добавление {len(chunks)} чанков в коллекцию '{collection_name}'...")
+        texts = [chunk.text for chunk in chunks]
+        ids = [chunk.id for chunk in chunks]
+        chunk_ids = self._add_texts(collection_name, texts, ids)
         total_chunks = self.get_collection_length(collection_name)
 
         logger.info(

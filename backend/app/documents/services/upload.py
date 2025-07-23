@@ -56,7 +56,7 @@ async def save_document(
             content_type=content_type
         )
     except Exception as e:
-        logger.error(f"Ошибка загрузки файла в MinIO: {e}")
+        logger.error(f"Ошибка загрузки файла в MinIO: {repr(e)}")
         raise HTTPException(status_code=500, detail="Ошибка при сохранении в MinIO")
 
     try:
@@ -73,8 +73,8 @@ async def save_document(
         try:
             minio_client.delete_document(object_name)
             logger.info(f"Файл {object_name} удалён из MinIO после ошибки в БД.")
-        except Exception as minio_err:
-            logger.critical(f"Ошибка при удалении из MinIO после сбоя: {minio_err}")
+        except Exception as e:
+            logger.critical(f"Ошибка при удалении из MinIO после сбоя: {repr(e)}")
         raise HTTPException(status_code=500, detail="Ошибка при сохранении документа")
     
     try:
@@ -84,6 +84,6 @@ async def save_document(
             original_filename=file.filename,
         )
     except Exception as e:
-        logger.error(f"Ошибка при вызове docs_api для обработки документа: {e}")
+        logger.error(f"Ошибка при вызове docs_api для обработки документа: {repr(e)}")
     
     return result

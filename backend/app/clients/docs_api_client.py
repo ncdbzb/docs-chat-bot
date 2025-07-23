@@ -16,11 +16,11 @@ class DocsApiClient:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.post(url, json=payload)
                 response.raise_for_status()
         except httpx.HTTPError as e:
-            logger.error(f"[DocsAPI] Ошибка при отправке документа {document_id} на индексирование: {e}")
+            logger.error(f"[DocsAPI] Ошибка при отправке документа {document_id} на индексирование: {repr(e)}")
             raise
 
     async def delete_document(self, document_id: str) -> None:
@@ -31,7 +31,7 @@ class DocsApiClient:
                 response = await client.delete(url)
                 response.raise_for_status()
         except httpx.HTTPError as e:
-            logger.error(f"[DocsAPI] Ошибка при удалении документа {document_id}: {e}")
+            logger.error(f"[DocsAPI] Ошибка при удалении документа {document_id}: {repr(e)}")
             raise
 
     async def get_collections(self) -> list[str]:
@@ -46,5 +46,5 @@ class DocsApiClient:
                 logger.info(f"Получено {len(collections)} объектов из ChromaDB")
                 return collections
         except httpx.HTTPError as e:
-            logger.error(f"[DocsAPI] Ошибка при получении списка коллекций: {e}")
+            logger.error(f"[DocsAPI] Ошибка при получении списка коллекций: {repr(e)}")
             raise

@@ -39,4 +39,4 @@ async def delete_document(
     except ValueError as ve:
         raise HTTPException(status_code=404, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete document: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка при удалении документа")

@@ -1,13 +1,11 @@
 from fastapi import HTTPException
 
 from app.documents.schemas import DocumentIngestionRequest
+from app.documents.parser import parse_docx_to_chunks
 from app.clients.minio_client import MinioClient
 from app.clients.chromadb_client import ChromaDBManager
 from app.logger import logger
 
-
-def dummy_parser(doc_bytes: bytes) -> list[str]:
-    return ["chunk 1 from doc", "chunk 2 from doc"]
 
 async def ingest_document(
     request: DocumentIngestionRequest,
@@ -23,7 +21,7 @@ async def ingest_document(
         raise
 
     try:
-        chunks = dummy_parser(document_bytes)
+        chunks = parse_docx_to_chunks(document_bytes)
         logger.info(f"Документ {request.document_id} разбит на {len(chunks)} чанков")
     except Exception as e:
         logger.error(f"Ошибка парсинга: {e}")
@@ -32,7 +30,7 @@ async def ingest_document(
     try:
         chromadb_manager.add_chunks(
             collection_name=str(request.document_id),
-            splitted_docs=chunks,
+            chunks=chunks,
         )
         logger.info(f"Коллекция {request.document_id} успешно создана")
     except Exception as e:

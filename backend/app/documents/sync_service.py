@@ -58,7 +58,7 @@ async def sync_documents_with_storage(
             )
             logger.info(f"Восстановлена коллекция {missing_id} в ChromaDB через Docs API")
         except Exception as e:
-            logger.error(f"Ошибка восстановления коллекции {missing_id}: {e}")
+            logger.error(f"Ошибка восстановления коллекции {missing_id}: {repr(e)}")
 
     # --- Удаление "мусорных" коллекций из ChromaDB ---
     extra_in_chroma = chroma_ids - actual_postgres_ids
@@ -67,6 +67,6 @@ async def sync_documents_with_storage(
             await docs_api_client.delete_document(collection_id)
             logger.warning(f"Удалена лишняя коллекция из ChromaDB через Docs API: {collection_id}")
         except Exception as e:
-            logger.error(f"Ошибка удаления коллекции {collection_id}: {e}")
+            logger.error(f"Ошибка удаления коллекции {collection_id}: {repr(e)}")
 
     logger.info("Синхронизация между Postgres, MinIO и ChromaDB завершена")

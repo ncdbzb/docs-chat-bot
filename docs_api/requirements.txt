@@ -8,3 +8,4 @@ requests
 python-dotenv
 minio
 pydantic-settings
+python-docx
