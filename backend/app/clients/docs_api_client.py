@@ -48,3 +48,19 @@ class DocsApiClient:
         except httpx.HTTPError as e:
             logger.error(f"[DocsAPI] Ошибка при получении списка коллекций: {repr(e)}")
             raise
+
+    async def get_answer(self, question: str, collection_name: str) -> str:
+        url = f"{self.base_url}/rag/answer"
+        payload = {
+            "question": question,
+            "collection_name": collection_name
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=120) as client:
+                response = await client.post(url, json=payload)
+                response.raise_for_status()
+                return response.json()["answer"]
+        except httpx.HTTPError as e:
+            logger.error(f"[DocsAPI] Ошибка при получении ответа от RAG-сервиса: {repr(e)}")
+            raise

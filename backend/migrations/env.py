@@ -11,7 +11,7 @@ from app.config import settings
 # access to the values within the .ini file in use.
 from app.auth.models import metadata as auth_metadata
 from app.documents.models import metadata as docs_metadata
-# from src.llm_service.models import metadata as llm_service_metadata
+from app.core.models import metadata as core_metadata
 from app.admin_requests.models import metadata as admin_panel_metadata
 config = context.config
 
@@ -33,7 +33,7 @@ if config.config_file_name is not None:
 target_metadata = [
     auth_metadata,
     docs_metadata,
-    # llm_service_metadata,
+    core_metadata,
     admin_panel_metadata
 ]
 

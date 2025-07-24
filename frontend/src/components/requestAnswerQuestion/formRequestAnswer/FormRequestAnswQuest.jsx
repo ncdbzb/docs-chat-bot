@@ -51,10 +51,18 @@ const FormRequestAnswQuest = ({ docName }) => {
         setServerError('');
         setLoading(true); // Показываем спиннер
         try {
-            const response = await fetch(`${apiUrl}/get_answer?filename=${docName}&question=${question}`, {
+            const response = await fetch(`${apiUrl}/get_answer`, {
                 method: 'POST',
                 credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename: docName,
+                    question: question,
+                }),
             });
+
             if (!response.ok) {
                 if (response.status === 401) {
                     throw new Error('Пожалуйста, авторизируйтесь!');
@@ -65,15 +73,16 @@ const FormRequestAnswQuest = ({ docName }) => {
 
             const responseData = await response.json();
             handleCancel();
-            addItem(responseData['result']); // Получение данных из ответа
-            setId(responseData['request_id']);
-            setResult(responseData['result']);
+            addItem({ question: question, answer: responseData.result });
+            setId(responseData.request_id);
+            setResult(responseData.result);
         } catch (error) {
             setServerError(error.message);
         } finally {
             setLoading(false); // Скрываем спиннер
         }
     };
+
 
     useEffect(() => {
         if (textareaRef.current) {

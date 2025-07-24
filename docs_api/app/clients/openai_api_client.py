@@ -15,11 +15,11 @@ class CustomLLM(LLM):
 
     Attributes:
         model_name (str): Название модели для использования
-        client (OpenAI): Клиент OpenAI API
+        client (OpenAI | None): Клиент OpenAI API
     """
 
     model_name: str
-    client: OpenAI
+    client: OpenAI | None
 
     def __init__(self):
         """
@@ -30,7 +30,7 @@ class CustomLLM(LLM):
             model_name (str): Название модели
             api_key (str): Секретный ключ openai_api
         """
-        super().__init__(model_name="", client=None)
+        super().__init__(model_name=settings.LLM_MODEL, client=None)
         self.model_name = settings.LLM_MODEL
         self.client = OpenAI(
             base_url=settings.OPENAI_API_URL,   
@@ -47,6 +47,7 @@ class CustomLLM(LLM):
         return self.get_response_from_server(prompt)
     
     def get_response_from_server(self, prompt: str) -> str:
+        logger.info(f'ПРОМПТ: {prompt}')
         try:
             completion = self.client.chat.completions.create(
                 model=self.model_name,

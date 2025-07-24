@@ -6,6 +6,7 @@ from app.auth.routers.verify_router import router as verify_router
 from app.auth.routers.forgot_pass_router import router as forgot_pass_router
 from app.documents.router import router as documents_router
 from app.admin_requests.router import router as admin_requests_router
+from app.core.router import router as core_router
 
 
 def include_routers(app: FastAPI):
@@ -28,4 +29,5 @@ def include_routers(app: FastAPI):
     app.include_router(forgot_pass_router, prefix="/auth", tags=["Auth"])
     app.include_router(documents_router, prefix="/documents", tags=["Documents"])
     app.include_router(admin_requests_router, prefix="/admin", tags=["Admin"])
+    app.include_router(core_router)
     
