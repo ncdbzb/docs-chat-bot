@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.models import qa_logs, test_logs
+from app.core.models import qa_logs, test_logs, test_answers_log
 from app.logger import logger
 
 
@@ -77,4 +77,40 @@ class CoreRepository:
             return answer_row[0]
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при получении правильного ответа: {e}")
+            raise
+    
+    async def log_test_answer(
+        self,
+        *,
+        user_id: uuid.UUID,
+        test_id: uuid.UUID,
+        selected_option: str,
+        is_correct: bool,
+    ) -> None:
+        stmt = insert(test_answers_log).values(
+            user_id=user_id,
+            test_id=test_id,
+            selected_answer=selected_option,
+            is_correct=is_correct,
+        )
+        try:
+            await self.session.execute(stmt)
+            await self.session.commit()
+            logger.info(f"Ответ пользователя сохранён: user_id={user_id}, test_id={test_id}, is_correct={is_correct}")
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при логировании ответа на тест: {e}")
+            raise
+    
+    async def is_already_answered(
+        self, user_id: uuid.UUID, test_id: uuid.UUID
+    ) -> bool:
+        stmt = select(test_answers_log.c.id).where(
+            test_answers_log.c.user_id == user_id,
+            test_answers_log.c.test_id == test_id
+        )
+        try:
+            result = await self.session.execute(stmt)
+            return result.scalar() is not None
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при проверке повторного ответа: {e}")
             raise

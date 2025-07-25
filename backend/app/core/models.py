@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Table, Column, ForeignKey, Text, DateTime, MetaData
+    Table, Column, ForeignKey, Text, DateTime, MetaData, Boolean
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
@@ -32,5 +32,16 @@ test_logs = Table(
     Column("option_3", Text, nullable=False),
     Column("option_4", Text, nullable=False),
     Column("right_answer", Text, nullable=False),
+    Column("created_at", DateTime(timezone=True), server_default=func.now()),
+)
+
+test_answers_log = Table(
+    "test_answers_log",
+    metadata,
+    Column("id", UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()),
+    Column("user_id", UUID(as_uuid=True), ForeignKey(user.c.id, ondelete="CASCADE"), nullable=False),
+    Column("test_id", UUID(as_uuid=True), ForeignKey(test_logs.c.id, ondelete="CASCADE"), nullable=False),
+    Column("selected_answer", Text, nullable=False),
+    Column("is_correct", Boolean, nullable=False),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
 )

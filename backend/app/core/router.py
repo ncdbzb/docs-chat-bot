@@ -60,6 +60,7 @@ async def get_test_endpoint(
 @router.post("/check_test", response_model=CheckTestResponse)
 async def check_test_endpoint(
     body: CheckTestRequest,
+    user: AuthUser = Depends(current_user),
     core_repo: CoreRepository = Depends(get_core_repository),
 ):
-    return await check_test_answer(body=body, core_repo=core_repo)
+    return await check_test_answer(body=body, user=user, core_repo=core_repo)
