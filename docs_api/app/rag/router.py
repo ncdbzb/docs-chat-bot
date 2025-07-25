@@ -7,7 +7,7 @@ from app.rag.schemas import QARequest, QAResponse
 router = APIRouter()
 
 
-@router.post("/answer", response_model=QAResponse)
+@router.post("/get_answer", response_model=QAResponse)
 async def answer_endpoint(request: QARequest):
     answer = get_answer(request.question, request.collection_name)
     return QAResponse(answer=answer)

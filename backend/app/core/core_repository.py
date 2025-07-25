@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.models import qa_logs
+from app.core.models import qa_logs, test_logs
 from app.logger import logger
 
 
@@ -33,4 +33,36 @@ class CoreRepository:
             logger.info(f"QA лог успешно сохранен: user_id={user_id}, doc_id={document_id}")
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при логировании QA: {e}")
+            raise
+    
+    async def log_test(
+        self,
+        *,
+        test_id: uuid.UUID,
+        user_id: uuid.UUID,
+        document_id: uuid.UUID,
+        question: str,
+        option_1: str,
+        option_2: str,
+        option_3: str,
+        option_4: str,
+        right_answer: str,
+    ) -> None:
+        stmt = insert(test_logs).values(
+            id=test_id,
+            user_id=user_id,
+            document_id=document_id,
+            question=question,
+            option_1=option_1,
+            option_2=option_2,
+            option_3=option_3,
+            option_4=option_4,
+            right_answer=right_answer,
+        )
+        try:
+            await self.session.execute(stmt)
+            await self.session.commit()
+            logger.info(f"Тест сохранён: user_id={user_id}, doc_id={document_id}")
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при логировании теста: {e}")
             raise

@@ -88,3 +88,28 @@ class ChromaDBManager:
             logger.info(f"Коллекция '{collection_name}' успешно удалена.")
         except Exception as e:
             logger.error(f"Ошибка при удалении коллекции '{collection_name}': {e}")
+
+    def get_chunk_ids_by_collection(self, collection_name: str) -> list[str]:
+        """Возвращает список всех IDs чанков в коллекции."""
+        try:
+            collection = self._get_collection(collection_name)
+            result = collection.get(include=['metadatas'], limit=None)
+            return result['ids']
+        except Exception as e:
+            logger.error(f"Ошибка при получении IDs из коллекции '{collection_name}': {e}")
+            return []
+
+    def get_chunk_by_id(self, collection_name: str, chunk_id: str) -> str | None:
+        """Возвращает текст чанка по его ID из указанной коллекции."""
+        try:
+            collection = self._get_collection(collection_name)
+            result = collection.get(ids=[chunk_id], include=['documents'])
+            documents = result.get('documents', [])
+            if documents:
+                return documents[0]
+            else:
+                logger.warning(f"Чанк с id '{chunk_id}' не найден в коллекции '{collection_name}'.")
+                return None
+        except Exception as e:
+            logger.error(f"Ошибка при получении чанка с id '{chunk_id}' из коллекции '{collection_name}': {e}")
+            return None

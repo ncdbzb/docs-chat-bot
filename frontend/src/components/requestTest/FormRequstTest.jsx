@@ -24,28 +24,33 @@ const FormRequestsTest = (props) => {
         setLoading(true);
 
         try {
-             // Отправляем запрос только если данные еще не загружены
-                const response = await fetch(`${apiUrl}/get_test?filename=${props.docName}`, {
-                    method: 'POST',
-                    credentials: 'include',
-                });
+            const response = await fetch(`${apiUrl}/get_test`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ filename: props.docName }),
+            });
 
-                if(response.status===401){
-                    setServerError('Чтобы сгенировать тест авторизируйтесь');
-                }
-                else if (response.status===502) {
-                    setServerError('Произошла ошибка при генерации теста, попробуйте заново');
-                }
-                localStorage.removeItem('rightAnswer'); 
-                const responseData = await response.json();
-                localStorage.setItem('storageTest',JSON.stringify(responseData.result))
-                localStorage.setItem('idRequest',JSON.stringify(responseData.request_id))
-                setQuestionData(responseData.result);
-                setId(responseData.request_id);
-                setResult(responseData.result);
-                setSelectedAnswer('');
-                setAnswerServer('');
-            
+            if (response.status === 401) {
+                setServerError('Чтобы сгенерировать тест, авторизируйтесь');
+            } else if (response.status === 502) {
+                setServerError('Произошла ошибка при генерации теста, попробуйте заново');
+            }
+
+            const responseData = await response.json();
+
+            localStorage.removeItem('rightAnswer');
+            localStorage.setItem('storageTest', JSON.stringify(responseData.result));
+            localStorage.setItem('idRequest', JSON.stringify(responseData.request_id));
+
+            setQuestionData(responseData.result);
+            setId(responseData.request_id);
+            setResult(responseData.result);
+            setSelectedAnswer('');
+            setAnswerServer('');
+
         } catch (error) {
             setServerError(error.message);
         } finally {

@@ -1,6 +1,7 @@
 import httpx
 from app.logger import logger
 from app.config import settings
+from app.core.schemas import GetTestInnerResult
 
 
 class DocsApiClient:
@@ -50,17 +51,30 @@ class DocsApiClient:
             raise
 
     async def get_answer(self, question: str, collection_name: str) -> str:
-        url = f"{self.base_url}/rag/answer"
+        url = f"{self.base_url}/get_answer"
         payload = {
             "question": question,
             "collection_name": collection_name
         }
 
         try:
-            async with httpx.AsyncClient(timeout=120) as client:
+            async with httpx.AsyncClient(timeout=300) as client:
                 response = await client.post(url, json=payload)
                 response.raise_for_status()
                 return response.json()["answer"]
         except httpx.HTTPError as e:
-            logger.error(f"[DocsAPI] Ошибка при получении ответа от RAG-сервиса: {repr(e)}")
+            logger.error(f"[DocsAPI] Ошибка при получении ответа от DocsAPI: {repr(e)}")
+            raise
+    
+    async def get_test(self, collection_name: str) -> GetTestInnerResult:
+        url = f"{self.base_url}/get_test"
+        payload = {"collection_name": collection_name}
+
+        try:
+            async with httpx.AsyncClient(timeout=300) as client:
+                response = await client.post(url, json=payload)
+                response.raise_for_status()
+                return GetTestInnerResult(**response.json())
+        except httpx.HTTPError as e:
+            logger.error(f"[DocsAPI] Ошибка при получении теста от DocsAPI: {repr(e)}")
             raise
