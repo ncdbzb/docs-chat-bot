@@ -38,3 +38,12 @@ class GetQARequest(BaseModel):
 class GetQAResponse(BaseModel):
     result: str
     request_id: str
+
+
+class CheckTestRequest(BaseModel):
+    request_id: UUID
+    selected_option: str
+
+
+class CheckTestResponse(BaseModel):
+    right_answer: str

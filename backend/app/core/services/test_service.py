@@ -1,4 +1,4 @@
-from app.core.schemas import GetTestInnerResult
+from app.core.schemas import GetTestInnerResult, CheckTestRequest, CheckTestResponse
 from app.core.core_repository import CoreRepository
 from app.clients.docs_api_client import DocsApiClient
 from app.auth.models import AuthUser
@@ -31,3 +31,11 @@ async def get_test_for_user(
     )
 
     return test
+
+
+async def check_test_answer(
+    body: CheckTestRequest,
+    core_repo: CoreRepository,
+) -> CheckTestResponse:
+    right_answer = await core_repo.get_right_answer_by_test_id(body.request_id)
+    return CheckTestResponse(right_answer=right_answer)

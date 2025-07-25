@@ -47,7 +47,7 @@ class CustomLLM(LLM):
         return self.get_response_from_server(prompt)
     
     def get_response_from_server(self, prompt: str) -> str:
-        logger.info(f'ПРОМПТ: {prompt}')
+        # logger.info(f'ПРОМПТ: {prompt}')
         try:
             completion = self.client.chat.completions.create(
                 model=self.model_name,
