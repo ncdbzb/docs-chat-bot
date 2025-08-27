@@ -3,9 +3,12 @@ uvicorn[standard]
 openai
 langchain
 langchain-chroma
+langchain-community
 chromadb
 requests
 python-dotenv
 minio
 pydantic-settings
 python-docx
+docx2python
+rank_bm25

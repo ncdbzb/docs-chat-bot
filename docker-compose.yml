@@ -132,7 +132,7 @@ services:
       - backend
 
   pgadmin:
-    image: dpage/pgadmin4:9.5
+    image: dpage/pgadmin4:9.6
     container_name: pg_admin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}

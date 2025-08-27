@@ -15,6 +15,8 @@ class CollectionListResponse(BaseModel):
 class Chunk(BaseModel):
     id: str
     text: str
+    section: str = None
+    source_id: int = None
 
     @staticmethod
     def create_id():
