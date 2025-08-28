@@ -13,6 +13,7 @@ from app.auth.models import metadata as auth_metadata
 from app.documents.models import metadata as docs_metadata
 from app.core.models import metadata as core_metadata
 from app.admin_requests.models import metadata as admin_panel_metadata
+from app.feedbacks.models import metadata as feedbacks_metadata
 config = context.config
 
 section = config.config_ini_section
@@ -34,7 +35,8 @@ target_metadata = [
     auth_metadata,
     docs_metadata,
     core_metadata,
-    admin_panel_metadata
+    admin_panel_metadata,
+    feedbacks_metadata
 ]
 
 # other values from the config, defined by the needs of env.py,
