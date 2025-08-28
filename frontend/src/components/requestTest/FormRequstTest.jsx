@@ -26,17 +26,22 @@ const FormRequestsTest = (props) => {
         try {
             const response = await fetch(`${apiUrl}/get_test`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({ filename: props.docName }),
             });
 
             if (response.status === 401) {
                 setServerError('Чтобы сгенерировать тест, авторизируйтесь');
-            } else if (response.status === 502) {
-                setServerError('Произошла ошибка при генерации теста, попробуйте заново');
+                return;
+            } 
+            else if (response.status >= 500 && response.status < 600) {
+                setServerError('Произошла ошибка на сервере при генерации теста, попробуйте заново');
+                return;
+            } 
+            else if (!response.ok) {
+                setServerError(`Ошибка запроса: ${response.status}`);
+                return;
             }
 
             const responseData = await response.json();
@@ -52,7 +57,8 @@ const FormRequestsTest = (props) => {
             setAnswerServer('');
 
         } catch (error) {
-            setServerError(error.message);
+            setServerError('Не удалось получить тест. Попробуйте снова.');
+            console.error(error);
         } finally {
             setLoading(false);
         }
