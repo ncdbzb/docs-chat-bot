@@ -2,45 +2,13 @@ from random import choice
 from pydantic import ValidationError
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableMap
 
 from app.logger import logger
 from app.clients.chromadb_client import ChromaDBManager
 from app.clients.openai_api_client import CustomLLM
 from app.tests.schemas import TestRequest, TestResponse
-
-
-QUESTION_GEN_PROMPT = PromptTemplate.from_template(
-    """Ты — ассистент по обучению сотрудников на основе внутренних документов компании ООО «УЦСБ».
-
-Вот отрывок из внутреннего документа:
-```{chunk_text}```
-
-На его основе сгенерируй **один** тестовый вопрос с **четырьмя вариантами ответа**, **строго в формате JSON** со всеми следующими полями:
-
-- `"question"`: строка — формулировка вопроса.
-- `"1 option"`, `"2 option"`, `"3 option"`, `"4 option"`: строки — варианты ответа.
-- `"right answer"`: **строго текст одного из четырёх вариантов**, то есть должно точно совпадать с одним из полей `"1 option"`–`"4 option"`.
-
-**Формат ответа — строго только JSON. Без пояснений, без заголовков, без комментариев.**
-
-Все ключи должны быть заключены в **двойные кавычки**. Не завершай JSON до тех пор, пока все поля не будут заполнены.
-
-Вот пример правильного формата:
-
-```json
-{{
-  "question": "Кто отвечает за пожарную безопасность?",
-  "1 option": "Охранник",
-  "2 option": "Ответственный по ПБ",
-  "3 option": "Любой сотрудник",
-  "4 option": "Пожарная инспекция",
-  "right answer": "Ответственный по ПБ"
-}}
-```
-"""
-)
+from app.tests.test_prompt import test_prompt
 
 
 def generate_test_question(request: TestRequest) -> TestResponse:
@@ -60,11 +28,10 @@ def generate_test_question(request: TestRequest) -> TestResponse:
 
     llm = CustomLLM()
     parser = JsonOutputParser()
-    prompt = QUESTION_GEN_PROMPT
 
     chain = (
         RunnableMap({"chunk_text": RunnablePassthrough()})
-        | prompt
+        | test_prompt
         | llm
         | parser
     )
