@@ -33,7 +33,10 @@ const SeachForDocumentation = ({ onClick }) => {
     };
 
     const clickLink = (item) => {
-        copyTextToClipboard(`${apiUrlFront}/request_documentation?documentation=${item['name']}`);
+        const url = `${apiUrlFront}/request_documentation?documentation=${item['name']}`;
+        window.open(url, "_blank"); // откроет в новой вкладке
+        // или, если нужно в этой же вкладке:
+        // window.location.href = url;
     };
 
     let userUrl = 'my';
@@ -108,7 +111,7 @@ const SeachForDocumentation = ({ onClick }) => {
                                 <p className='description'>{item['description']}</p>
                                 <div className='container-button'>
                                     <button className='btn-add' onClick={() => clickLink(item)}>
-                                        Получить ссылку
+                                        Перейти
                                     </button>
                                     <button className="button" onClick={() => handleAddClickSave(true,item['name'] )}>Дополнить</button>
                                     <button className="button" onClick={() => confirmDelete(item['name'])}>
