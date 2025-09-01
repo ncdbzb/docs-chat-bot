@@ -19,13 +19,6 @@ def generate_test_question(request: TestRequest) -> TestResponse:
         logger.warning(f"Нет чанков в коллекции: {request.collection_name}")
         raise ValueError("Невозможно сгенерировать тест: коллекция пуста.")
 
-    random_chunk_id = choice(chunk_ids)
-    chunk_text = chromadb.get_chunk_by_id(request.collection_name, random_chunk_id)
-
-    if not chunk_text:
-        logger.error(f"Не удалось получить текст чанка с id={random_chunk_id}")
-        raise ValueError("Ошибка при получении текста чанка.")
-
     llm = CustomLLM()
     parser = JsonOutputParser()
 
@@ -36,18 +29,33 @@ def generate_test_question(request: TestRequest) -> TestResponse:
         | parser
     )
 
-    try:
-        result_dict = chain.invoke(chunk_text)
-        return TestResponse(**result_dict)
-    except ValidationError as ve:
-        logger.error("Ошибка валидации при создании TestResponse из результата LLM:")
-        for err in ve.errors():
-            loc = ' -> '.join(str(x) for x in err.get('loc', []))
-            msg = err.get('msg', 'Unknown error')
-            typ = err.get('type', 'unknown_type')
-            logger.error(f"Поле: {loc} | Ошибка: {msg} | Тип: {typ}")
-        logger.error(f"Результат от LLM (до валидации): {result_dict}")
-        raise ValueError("Ответ модели не соответствует ожидаемой структуре TestResponse.")
-    except Exception as e:
-        logger.exception(f"Непредвиденная ошибка при генерации или парсинге вопроса: {e}")
-        raise ValueError("Ошибка при генерации тестового вопроса.")
+    last_error = None
+
+    for attempt in range(1, 4):  # до 3 попыток
+        random_chunk_id = choice(chunk_ids)
+        chunk_text = chromadb.get_chunk_by_id(request.collection_name, random_chunk_id)
+
+        if not chunk_text:
+            logger.error(f"[Попытка {attempt}/3] Не удалось получить текст чанка с id={random_chunk_id}")
+            last_error = ValueError(f"Чанк {random_chunk_id} пустой или не найден.")
+            continue
+
+        try:
+            result_dict = chain.invoke(chunk_text)
+            return TestResponse(**result_dict)
+        except ValidationError as ve:
+            logger.error(f"[Попытка {attempt}/3] Ошибка валидации TestResponse:")
+            for err in ve.errors():
+                loc = ' -> '.join(str(x) for x in err.get('loc', []))
+                msg = err.get('msg', 'Unknown error')
+                typ = err.get('type', 'unknown_type')
+                logger.error(f"Поле: {loc} | Ошибка: {msg} | Тип: {typ}")
+            logger.error(f"Результат от LLM (до валидации): {result_dict}")
+            last_error = ve
+        except Exception as e:
+            logger.exception(f"[Попытка {attempt}/3] Непредвиденная ошибка: {e}")
+            last_error = e
+
+    # если все 3 раза ошибка → пробрасываем её
+    raise ValueError(f"Не удалось сгенерировать тест после 3 попыток. Последняя ошибка: {last_error}")
+
