@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import insert, select, delete, update
+from sqlalchemy import insert, select, delete, update, or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.documents.models import documents
@@ -22,6 +22,7 @@ class DocumentRepository:
         size: int,
         user_id: uuid.UUID,
         storage_key: str,
+        added_by_admin: bool,
     ) -> DocumentCreateResponse:
         stmt = (
             insert(documents)
@@ -34,6 +35,7 @@ class DocumentRepository:
                 size=size,
                 user_id=user_id,
                 storage_key=storage_key,
+                added_by_admin=added_by_admin,
             )
             .returning(documents)
         )
@@ -126,7 +128,12 @@ class DocumentRepository:
 
     async def get_my_documents_from_repo(self, user_id: uuid.UUID) -> list[DocumentShort]:
         try:
-            stmt = select(documents.c.name, documents.c.description).where(documents.c.user_id == user_id)
+            stmt = select(documents.c.name, documents.c.description).where(
+                or_(
+                    documents.c.user_id == user_id,
+                    documents.c.added_by_admin == True
+                )
+            )
             result = await self.session.execute(stmt)
             rows = result.mappings().all()
             logger.info(f"Найдено {len(rows)} документов для пользователя {user_id}")

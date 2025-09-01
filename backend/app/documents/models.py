@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import (
-    Table, Column, String, DateTime, ForeignKey, Text, MetaData, BigInteger
+    Table, Column, String, DateTime, ForeignKey, Text, MetaData, BigInteger, Boolean
 )
 from sqlalchemy.sql import func
 
@@ -22,4 +22,5 @@ documents = Table(
     Column("user_id", UUID(as_uuid=True), ForeignKey(user.c.id, ondelete="CASCADE")),
     Column("storage_key", String, nullable=False),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
+    Column("added_by_admin", Boolean, nullable=False, server_default="false")
 )

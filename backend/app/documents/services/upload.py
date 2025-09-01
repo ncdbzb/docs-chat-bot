@@ -68,6 +68,7 @@ async def save_document(
             size=file_size,
             user_id=user.id,
             storage_key=object_name,
+            added_by_admin=user.is_superuser,
         )
     except Exception:
         try:
