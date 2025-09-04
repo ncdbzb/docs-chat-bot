@@ -12,3 +12,4 @@ pydantic-settings
 python-docx
 docx2python
 rank_bm25
+langfuse

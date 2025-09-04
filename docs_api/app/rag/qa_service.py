@@ -1,11 +1,17 @@
 from langchain.chains import RetrievalQA
 from langchain.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
+from langfuse.langchain import CallbackHandler
 
 from app.clients.openai_api_client import CustomLLM
 from app.clients.chromadb_client import ChromaDBManager
+from app.clients.langfuse_client import LangfuseClient
 from app.rag.qa_prompt import qa_prompt
 from app.logger import logger
+
+
+# langfuse = LangfuseClient().get_client()
+# langfuse_handler = CallbackHandler()
 
 
 def get_answer(question: str, collection_name: str) -> str:
@@ -32,7 +38,10 @@ def get_answer(question: str, collection_name: str) -> str:
         chain_type_kwargs={"prompt": qa_prompt}
     )
 
-    response = qa_chain.invoke({"query": question})
+    response = qa_chain.invoke(
+        {"query": question},
+        # config={"callbacks": [langfuse_handler]}
+    )
 
     source_docs = response.get("source_documents", [])
     if source_docs:

@@ -9,10 +9,12 @@ services:
       - POSTGRES_DB=${DB_NAME?Variable not set}
       - POSTGRES_USER=${DB_USER?Variable not set}
       - POSTGRES_PASSWORD=${DB_PASS?Variable not set}
+      - LANGFUSE_POSTGRES_DB=${LANGFUSE_POSTGRES_DB?Variable not set}
     expose:
       - ${DB_PORT}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./scripts/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 3s
@@ -83,6 +85,9 @@ services:
       MINIO_ENDPOINT: ${MINIO_DOMAIN}:${MINIO_API_PORT}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY}
+      LANGFUSE_HOST: http://langfuse-web:3000
     container_name: docs_api
     expose:
       - ${DOCS_API_PORT}
@@ -97,6 +102,12 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0) if urllib.request.urlopen('http://localhost:${DOCS_API_PORT}/health').getcode() == 200 else sys.exit(1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   backend:
     build:
@@ -113,7 +124,8 @@ services:
     expose:
       - ${BACKEND_PORT}
     depends_on:
-      - docs_api
+      docs_api:
+        condition: service_healthy
 
   frontend:
     build:
@@ -127,6 +139,7 @@ services:
       - nginx_certs:/etc/nginx/certs
     ports:
       - "444:443"
+      - "4443:4443"
     restart: always
     depends_on:
       - backend
@@ -148,9 +161,92 @@ services:
       db:
         condition: service_healthy
 
+  langfuse-worker:
+    image: langfuse/langfuse-worker:3
+    restart: always
+    container_name: langfuse_worker
+    depends_on: &langfuse-depends-on
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment: &langfuse-worker-env
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${LANGFUSE_POSTGRES_DB}
+      SALT: mysalt
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
+      TELEMETRY_ENABLED: "true"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: ${LANGFUSE_S3_UPLOAD_BUCKET:-langfuse}
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: ${LANGFUSE_S3_UPLOAD_REGION:-auto}
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:${MINIO_API_PORT}/
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: ${LANGFUSE_S3_FORCE_PATH_STYLE:-true}
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: ${LANGFUSE_S3_EVENT_UPLOAD_PREFIX:-events/}
+      LANGFUSE_S3_BATCH_EXPORT_ENABLED: ${LANGFUSE_S3_BATCH_EXPORT_ENABLED}
+      LANGFUSE_S3_BATCH_EXPORT_BUCKET: ${LANGFUSE_S3_UPLOAD_BUCKET:-langfuse}
+      LANGFUSE_S3_BATCH_EXPORT_REGION: ${LANGFUSE_S3_UPLOAD_REGION:-auto}
+      LANGFUSE_S3_BATCH_EXPORT_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      LANGFUSE_S3_BATCH_EXPORT_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      LANGFUSE_S3_BATCH_EXPORT_ENDPOINT: http://minio:${MINIO_API_PORT}/
+      LANGFUSE_S3_BATCH_EXPORT_FORCE_PATH_STYLE: ${LANGFUSE_S3_FORCE_PATH_STYLE:-true}
+      LANGFUSE_S3_BATCH_EXPORT_PREFIX: ${LANGFUSE_S3_BATCH_EXPORT_PREFIX:-exports/}
+      LANGFUSE_S3_BATCH_EXPORT_EXTERNAL_ENDPOINT: "https://${SERVER_DOMAIN}/minio/"
+      CLICKHOUSE_MIGRATION_URL: ${CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:9000}
+      CLICKHOUSE_URL: ${CLICKHOUSE_URL:-http://clickhouse:8123} 
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-clickhouse}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse}
+      CLICKHOUSE_CLUSTER_ENABLED: ${CLICKHOUSE_CLUSTER_ENABLED:-false}
+      REDIS_CONNECTION_STRING: "redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/${REDIS_LANGFUSE_DB}"
+
+  langfuse-web:
+    image: langfuse/langfuse:3
+    restart: always
+    container_name: langfuse_web
+    depends_on: *langfuse-depends-on
+    environment:
+      <<: *langfuse-worker-env
+      NEXTAUTH_URL: ${LANGFUSE_NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-secret}
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID:-}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME:-}
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID:-}
+      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_INIT_PROJECT_NAME:-}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:-}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:-}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:-admin@admin.com}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME:-admin}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-admin123}
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.3.2.39
+    restart: always
+    user: "101:101"
+    container_name: clickhouse
+    hostname: clickhouse
+    env_file:
+      - .env
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+      - langfuse_clickhouse_logs:/var/log/clickhouse-server
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider ${CLICKHOUSE_URL}/ping || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 1s
+  
 volumes:
   pgdata:
   pgadmin_data:
   nginx_certs:
   chroma_data:
   minio_data:
+  langfuse_clickhouse_data:
+  langfuse_clickhouse_logs:

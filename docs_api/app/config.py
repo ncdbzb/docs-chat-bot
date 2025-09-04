@@ -27,5 +27,10 @@ class Settings(BaseSettings):
     MINIO_BUCKET_NAME: str
     MINIO_ROOT_PATH: str
 
+    # Langfuse
+    LANGFUSE_SECRET_KEY: str
+    LANGFUSE_PUBLIC_KEY: str
+    LANGFUSE_HOST: str
+
 
 settings = Settings()
