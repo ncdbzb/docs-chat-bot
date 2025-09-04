@@ -25,7 +25,7 @@ router = APIRouter()
 async def upload_document(
     file: UploadFile = File(...),
     metadata: DocumentCreateMeta = Depends(DocumentCreateMeta.as_form),
-    user: AuthUser = Depends(current_user),
+    user: AuthUser = Depends(current_superuser),
     minio_client: MinioClient = Depends(get_minio_client),
     repo: DocumentRepository = Depends(get_document_repository),
     docs_api_client: DocsApiClient = Depends(get_docs_api_client),
