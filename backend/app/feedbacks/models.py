@@ -19,7 +19,7 @@ feedbacks = Table(
     "feedbacks",
     metadata,
     Column("id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-    Column("user_id", UUID(as_uuid=True), ForeignKey(user.c.id, ondelete="CASCADE"), nullable=False),
+    Column("user_id", UUID(as_uuid=True), ForeignKey(user.c.id, ondelete="CASCADE"), nullable=True),
     Column("request_id", UUID(as_uuid=True), nullable=False),
     Column(
         "value",

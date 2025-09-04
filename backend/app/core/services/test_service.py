@@ -11,7 +11,7 @@ from app.logger import logger
 
 
 async def get_test_for_user(
-    user: AuthUser,
+    user: AuthUser | None,
     filename: str,
     doc_repo: DocumentRepository,
     core_repo: CoreRepository,
@@ -53,7 +53,7 @@ async def get_test_for_user(
     try:
         await core_repo.log_test(
             test_id=test.id,
-            user_id=user.id,
+            user_id=user.id if user else None,
             document_id=document.id,
             question=test.question,
             option_1=test.option_1,
@@ -71,11 +71,12 @@ async def get_test_for_user(
 
 async def check_test_answer(
     body: CheckTestRequest,
-    user: AuthUser,
+    user: AuthUser | None,
     core_repo: CoreRepository,
 ) -> CheckTestResponse:
     already_answered = await core_repo.is_already_answered(
-        user_id=user.id, test_id=body.request_id
+        user_id=user.id if user else None,
+        test_id=body.request_id
     )
     if already_answered:
         raise HTTPException(status_code=400, detail="Вы уже отвечали на этот вопрос")
@@ -89,7 +90,7 @@ async def check_test_answer(
 
     try:
         await core_repo.log_test_answer(
-            user_id=user.id,
+            user_id=user.id if user else None,
             test_id=body.request_id,
             selected_option=body.selected_option,
             is_correct=is_correct,

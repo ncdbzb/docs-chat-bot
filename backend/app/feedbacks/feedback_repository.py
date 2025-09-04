@@ -14,7 +14,7 @@ class FeedbackRepository:
     async def log_feedback(
         self,
         *,
-        user_id: uuid.UUID,
+        user_id: uuid.UUID | None,
         request_id: uuid.UUID,
         value: str,
         user_comment: str | None = None,

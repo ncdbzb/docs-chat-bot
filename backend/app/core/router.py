@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends
 
 from app.auth.models import AuthUser
-from app.auth.auth_config import current_user
+from app.auth.auth_config import current_user, current_user_optional
 from app.dependencies.repository import get_document_repository, get_core_repository
 from app.dependencies.docs_api import get_docs_api_client, DocsApiClient
 from app.core.core_repository import CoreRepository
@@ -18,7 +18,7 @@ router = APIRouter()
 @router.post("/get_answer", response_model=GetQAResponse)
 async def get_answer_endpoint(
     body: GetQARequest,
-    user: AuthUser = Depends(current_user),
+    user: AuthUser | None = Depends(current_user_optional),
     doc_repo: DocumentRepository = Depends(get_document_repository),
     core_repo: CoreRepository = Depends(get_core_repository),
     docs_api_client: DocsApiClient = Depends(get_docs_api_client),
@@ -38,7 +38,7 @@ async def get_answer_endpoint(
 @router.post("/get_test", response_model=GetTestResponse)
 async def get_test_endpoint(
     body: GetTestRequest,
-    user: AuthUser = Depends(current_user),
+    user: AuthUser | None = Depends(current_user_optional),
     doc_repo: DocumentRepository = Depends(get_document_repository),
     core_repo: CoreRepository = Depends(get_core_repository),
     docs_api_client: DocsApiClient = Depends(get_docs_api_client),
@@ -60,7 +60,11 @@ async def get_test_endpoint(
 @router.post("/check_test", response_model=CheckTestResponse)
 async def check_test_endpoint(
     body: CheckTestRequest,
-    user: AuthUser = Depends(current_user),
+    user: AuthUser | None = Depends(current_user_optional),
     core_repo: CoreRepository = Depends(get_core_repository),
 ):
-    return await check_test_answer(body=body, user=user, core_repo=core_repo)
+    return await check_test_answer(
+        body=body,
+        user=user,
+        core_repo=core_repo
+    )

@@ -6,7 +6,7 @@ from app.logger import logger
 
 
 async def get_answer_for_user(
-    user: AuthUser,
+    user: AuthUser | None,
     filename: str,
     question: str,
     doc_repo: DocumentRepository,
@@ -28,7 +28,7 @@ async def get_answer_for_user(
 
     try:
         await core_repo.log_qa_interaction(
-            user_id=user.id,
+            user_id=user.id if user else None,
             document_id=document.id,
             question=question,
             answer=answer,

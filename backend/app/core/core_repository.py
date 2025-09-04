@@ -14,7 +14,7 @@ class CoreRepository:
     async def log_qa_interaction(
         self,
         *,
-        user_id: uuid.UUID,
+        user_id: uuid.UUID | None,
         document_id: uuid.UUID,
         question: str,
         answer: str,
@@ -39,7 +39,7 @@ class CoreRepository:
         self,
         *,
         test_id: uuid.UUID,
-        user_id: uuid.UUID,
+        user_id: uuid.UUID | None,
         document_id: uuid.UUID,
         question: str,
         option_1: str,
@@ -82,7 +82,7 @@ class CoreRepository:
     async def log_test_answer(
         self,
         *,
-        user_id: uuid.UUID,
+        user_id: uuid.UUID | None,
         test_id: uuid.UUID,
         selected_option: str,
         is_correct: bool,
@@ -102,7 +102,7 @@ class CoreRepository:
             raise
     
     async def is_already_answered(
-        self, user_id: uuid.UUID, test_id: uuid.UUID
+        self, user_id: uuid.UUID | None, test_id: uuid.UUID
     ) -> bool:
         stmt = select(test_answers_log.c.id).where(
             test_answers_log.c.user_id == user_id,
