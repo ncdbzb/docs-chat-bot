@@ -34,9 +34,9 @@ const SeachForDocumentation = ({ onClick }) => {
 
     const clickLink = (item) => {
         const url = `${apiUrlFront}/request_documentation?documentation=${item['name']}`;
-        window.open(url, "_blank"); // откроет в новой вкладке
+        // window.open(url, "_blank"); // откроет в новой вкладке
         // или, если нужно в этой же вкладке:
-        // window.location.href = url;
+        window.location.href = url;
     };
 
     let userUrl = 'my';
