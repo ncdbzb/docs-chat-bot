@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
 from app.documents.schemas import DocumentIngestionRequest
-from app.documents.parser_new import parse_docx_to_chunks
+from app.documents.parser import parse_docx_to_chunks
 from app.clients.minio_client import MinioClient
 from app.clients.chromadb_client import ChromaDBManager
 from app.logger import logger

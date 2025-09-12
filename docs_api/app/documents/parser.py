@@ -1,153 +1,97 @@
 import io
-import re
-from docx2python import docx2python
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from unstructured.partition.api import partition_via_api
+from unstructured.documents.elements import Element
 
 from app.documents.schemas import Chunk
+from app.logger import logger
+from app.config import settings
 
 
-def extract_paragraphs(docx_bytes: bytes) -> list[str]:
-    """Извлечение всех параграфов из docx, включая вложенные списки"""
-    file_stream = io.BytesIO(docx_bytes)
-    doc = docx2python(file_stream)
-    paragraphs = []
-
-    def extract_text(para):
-        texts = []
-        for item in para:
-            if isinstance(item, list):
-                texts.extend(extract_text(item))
-            elif isinstance(item, str):
-                text = item.strip()
-                if text:
-                    texts.append(text)
-        return texts
-
-    for section in doc.body:
-        for para in section:
-            paragraphs.extend(extract_text(para))
-    return paragraphs
-
-
-def clean_text(text: str) -> str:
+def _element_to_chunk(el: Element) -> Chunk:
     """
-    Очищает текст от:
-    - маркеров списка "--", "-"
-    - нумерации типа "1)", "1.2.3)", "12."
+    Преобразует unstructured.Element в Chunk.
+    - el.text -> text
+    - el.category -> element_type
+    - el.metadata может содержать filename, page_number и другие поля
     """
-    text = re.sub(r'^\d+([\.\d+]*)\)?\.?\s*', '', text)
-    text = re.sub(r'^[-–—]{1,2}\s*', '', text)
-    return text.strip()
+    text = getattr(el, "text", "") or ""
+    metadata = {}
+    try:
+        metadata = dict(getattr(el, "metadata", {}) or {})
+    except Exception:
+        metadata = {}
 
+    section = metadata.get("section") or metadata.get("title") or getattr(el, "category", None)
 
-def split_into_chunks(paragraphs: list[str], min_size=500, max_size=1000) -> list[dict]:
-    """
-    Делит документ на чанки:
-    - объединяет маленькие подряд идущие чанки одного раздела
-    - разбивает большие чанки с overlap 10%
-    """
-    chunks = []
-    current_section = None
-    current_chunk = []
+    source = metadata.get("filename") or metadata.get("source") or None
 
-    numbered_re = re.compile(r'^\d+([\.\d+]*)\)?\s+')
-    header_re = re.compile(r'^[А-ЯЁ\s0-9\(\)]+$')
+    page_number = metadata.get("page_number") or metadata.get("page") or None
+    if isinstance(page_number, str) and page_number.isdigit():
+        page_number = int(page_number)
 
-    # Шаг 1: базовое формирование чанков и merge подпунктов
-    for para in paragraphs:
-        para = para.strip()
-        if not para:
-            continue
+    element_type = getattr(el, "category", None)
 
-        if header_re.match(para):
-            current_section = clean_text(para)
-            continue
-
-        if numbered_re.match(para):
-            if current_chunk:
-                chunks.append({
-                    "section": current_section,
-                    "chunk": "\n".join(current_chunk)
-                })
-            current_chunk = [clean_text(para)]
-        elif para.startswith("--") or para.startswith("-"):
-            current_chunk.append(clean_text(para))
-        else:
-            current_chunk.append(clean_text(para))
-
-    if current_chunk:
-        chunks.append({
-            "section": current_section,
-            "chunk": "\n".join(current_chunk)
-        })
-
-    # Шаг 2: объединяем маленькие подряд идущие чанки внутри одного раздела
-    temp = []
-    for chunk in chunks:
-        if len(chunk["chunk"]) < min_size:
-            if temp and temp[-1]["section"] == chunk["section"]:
-                temp[-1]["chunk"] += "\n" + chunk["chunk"]
-            else:
-                temp.append(chunk.copy())
-        else:
-            temp.append(chunk.copy())
-    chunks = temp
-
-    # Шаг 3: разбиваем большие чанки с overlap 10%
-    final_chunks = []
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=max_size,
-        chunk_overlap=int(max_size * 0.1),
-        separators=["\n"]
+    return Chunk(
+        id=Chunk.create_id(),
+        text=text.strip(),
+        section=section,
+        source=source,
+        page_number=page_number,
+        element_type=element_type,
+        metadata=metadata or None,
     )
 
-    for idx, chunk in enumerate(chunks):
-        text = chunk["chunk"]
-        if len(text) > max_size:
-            split_texts = splitter.split_text(text)
-            for part in split_texts:
-                final_chunks.append({
-                    "section": chunk["section"],
-                    "chunk": part,
-                    "source_id": idx
-                })
-        else:
-            final_chunks.append({
-                "section": chunk["section"],
-                "chunk": text,
-                "source_id": idx
-            })
 
-    return final_chunks
+def parse_docx_to_chunks(file_bytes: bytes, metadata_filename: str | None = "uploaded.docx") -> list[Chunk]:
+    """
+    Основная функция: принимает байты .docx и возвращает список Chunk.
+    :param file_bytes: байты документа (как из MinIO)
+    :param metadata_filename: имя файла, которое будет записано в метаданные (обязательно при передаче file)
+    :return: список Chunk
+    """
+    if not isinstance(file_bytes, (bytes, bytearray)):
+        raise TypeError("file_bytes должен быть bytes или bytearray")
 
-
-# === Новая версия parse_docx_to_chunks для приложения ===
-def parse_docx_to_chunks(file_bytes: bytes) -> list[Chunk]:
-    paragraphs = extract_paragraphs(file_bytes)
-    raw_chunks = split_into_chunks(paragraphs)
+    try:
+        elements = partition_via_api(
+            file=file_bytes,
+            metadata_filename=metadata_filename,
+            api_url=settings.unstructured_api_url,
+            # chunking params
+            chunking_strategy=settings.CHUNKING_STRATEGY,
+            strategy=settings.UNSTRUCTURED_STRATEGY,
+            max_characters=settings.MAX_CHARACTERS,
+            new_after_n_chars=settings.NEW_AFTER_N_CHARS,
+            combine_under_n_chars=settings.COMBINE_UNDER_N_CHARS,
+        )
+    except Exception as e:
+        logger.exception("Error while partitioning document via unstructured API: %s", e)
+        raise e
 
     chunks: list[Chunk] = []
-    for c in raw_chunks:
-        chunks.append(Chunk(
-            id=Chunk.create_id(),
-            text=c["chunk"],
-            section=c.get("section"),
-            source_id=c.get("source_id")
-        ))
+    for el in elements:
+        text = getattr(el, "text", None) or ""
+        if not text.strip():
+            continue
+        chunks.append(_element_to_chunk(el))
+
+    logger.info("Parsed %d chunks from document (metadata_filename=%s)", len(chunks), metadata_filename)
 
     save_chunks_to_file(chunks)
     return chunks
 
 
-def save_chunks_to_file(chunks: list[Chunk], filename: str = 'chunks.txt') -> None:
+def save_chunks_to_file(chunks: list[Chunk], filename: str = "chunks.txt") -> None:
     """
     Сохраняет все чанки в текстовый файл.
-    
-    :param chunks: Список объектов Chunk
-    :param filename: Имя файла для сохранения
     """
-    with open(filename, 'w', encoding='utf-8') as file:
+    with open(filename, "w", encoding="utf-8") as fh:
         for chunk in chunks:
-            file.write(f"=== Раздел: {chunk.section} ===\n")
-            file.write(f"{chunk.text}\n\n")
-    print(f"Чанки успешно сохранены в {filename}")
+            fh.write("=== Chunk ID: %s ===\n" % chunk.id)
+            fh.write(f"Section: {chunk.section}\n")
+            fh.write(f"Element type: {chunk.element_type}\n")
+            fh.write(f"Source: {chunk.source}\n")
+            fh.write(f"Page: {chunk.page_number}\n")
+            fh.write("---\n")
+            fh.write(chunk.text + "\n\n")
+    logger.info("Chunks saved to %s", filename)

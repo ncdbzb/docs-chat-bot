@@ -113,12 +113,14 @@ class ChromaDBManager:
         metadatas = [
             {
                 "section": chunk.section or "Unknown",
-                "source_id": chunk.source_id or "N/A"
+                "source": chunk.source or "N/A",
+                "page_number": chunk.page_number,
+                "element_type": chunk.element_type,
+                **(chunk.metadata or {})
             }
             for chunk in chunks
         ]
 
-        # Добавляем тексты с metadata
         chunk_ids = self._add_texts(collection_name, texts, ids, metadatas=metadatas)
         total_chunks = self.get_collection_length(collection_name)
 

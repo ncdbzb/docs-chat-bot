@@ -60,7 +60,7 @@ services:
     container_name: minio
     restart: always
     command: server /data --address :${MINIO_API_PORT} --console-address :${MINIO_CONSOLE_PORT}
-    ports:
+    expose:
       - ${MINIO_API_PORT}:${MINIO_API_PORT}
       - ${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}
     volumes:
@@ -126,6 +126,15 @@ services:
     depends_on:
       docs_api:
         condition: service_healthy
+
+  unstructured-api:
+    image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
+    container_name: unstructured-api
+    expose:
+      - ${UNSTRUCTURED_API_PORT}
+    environment:
+      PORT: ${UNSTRUCTURED_API_PORT}
+
 
   frontend:
     build:
@@ -197,7 +206,7 @@ services:
       LANGFUSE_S3_BATCH_EXPORT_ENDPOINT: http://minio:${MINIO_API_PORT}/
       LANGFUSE_S3_BATCH_EXPORT_FORCE_PATH_STYLE: ${LANGFUSE_S3_FORCE_PATH_STYLE:-true}
       LANGFUSE_S3_BATCH_EXPORT_PREFIX: ${LANGFUSE_S3_BATCH_EXPORT_PREFIX:-exports/}
-      LANGFUSE_S3_BATCH_EXPORT_EXTERNAL_ENDPOINT: "https://${SERVER_DOMAIN}/minio/"
+      LANGFUSE_S3_BATCH_EXPORT_EXTERNAL_ENDPOINT: http://minio:${MINIO_API_PORT}/
       CLICKHOUSE_MIGRATION_URL: ${CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:9000}
       CLICKHOUSE_URL: ${CLICKHOUSE_URL:-http://clickhouse:8123} 
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-clickhouse}

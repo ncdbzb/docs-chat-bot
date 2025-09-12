@@ -1,4 +1,5 @@
 import uuid
+from typing import Any
 from pydantic import BaseModel
 
 
@@ -15,9 +16,12 @@ class CollectionListResponse(BaseModel):
 class Chunk(BaseModel):
     id: str
     text: str
-    section: str = None
-    source_id: int = None
+    section: str | None = None
+    source: str | None = None
+    page_number: int | None = None
+    element_type: str | None = None
+    metadata: dict[str, Any] | None = None
 
     @staticmethod
-    def create_id():
+    def create_id() -> str:
         return str(uuid.uuid4())
